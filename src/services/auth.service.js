@@ -1,4 +1,4 @@
-const rootUrl = 'http://192.168.1.91:5000';
+const rootUrl = 'http://192.168.100.6';
 
 const login = async (user, password) => {
     let response = await fetch(

@@ -5,7 +5,7 @@ let db = new sqlite3.Database('todo.db');
 module.exports = {
     authentication: ({ user, password }) => {
         return new Promise(res => {
-            db.all('SELECT * FROM users WHERE user = ?', [user], (e, r) => {
+            db.all('SELECT * FROM users WHERE user = ?;', [user], (e, r) => {
                 if (e) return res({ err: e.toString() });
                 if (!r.length) return res({ err: 'No such user!' })
                 res({ authenticated: ph.verify(password, r[0].password) });
