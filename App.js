@@ -1,9 +1,6 @@
 import React from 'react';
 
-import {
-  Scene,
-  Router,
-} from 'react-native-router-flux';
+import {Scene, Router} from 'react-native-router-flux';
 
 import Login from './src/Login';
 import Register from './src/Register';
@@ -15,28 +12,35 @@ export default class App extends React.Component {
       <Router>
         <Scene
           lazy={true}
-          key='root'
-          drawerLockMode='locked-closed'
-          gesturesEnabled={false}
-        >
+          key="root"
+          drawerLockMode="locked-closed"
+          gesturesEnabled={false}>
           <Scene
             hideNavBar
-            key='login'
+            key="login"
             lazy={true}
             component={Login}
             gesturesEnabled={false}
-            drawerLockMode='locked-closed'
+            drawerLockMode="locked-closed"
+          />
+          <Scene
+            hideNavBar
+            key="register"
+            lazy={true}
+            component={Register}
+            gesturesEnabled={false}
+            drawerLockMode="locked-closed"
           />
           <Scene
             hideNavBar
             lazy={true}
-            key='toDoList'
+            key="toDoList"
             component={ToDoList}
             gesturesEnabled={false}
-            drawerLockMode='locked-closed'
+            drawerLockMode="locked-closed"
           />
         </Scene>
-      </Router >
+      </Router>
     );
   }
-};
+}

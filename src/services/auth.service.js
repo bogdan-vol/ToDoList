@@ -1,20 +1,12 @@
-const rootUrl = 'http://192.168.100.6';
+import {request} from './commons.service';
 
-const login = async (user, password) => {
-    let response = await fetch(
-        `${rootUrl}/user/login`,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ user, password })
-        }
-    );
-    return await response.json();
-}
+const login = async (user, password) =>
+  request('user/login', 'POST', JSON.stringify({user, password}));
+
+const register = async (user, password) =>
+  request('user/register', 'POST', JSON.stringify({user, password}));
 
 export default {
-    login,
-    rootUrl,
-}
+  login,
+  register,
+};
