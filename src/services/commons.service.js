@@ -1,12 +1,13 @@
 const rootUrl = 'http://192.168.1.4:5000';
+import authService from './auth.service';
 
-export const request = async (route, method, body, cred) =>
+export const request = async (route, method, body) =>
   await (
     await fetch(`${rootUrl}/${route}`, {
       body,
       method: method || 'GET',
       headers: {
-        ...cred,
+        ...authService,
         'Content-Type': 'application/json',
       },
     })

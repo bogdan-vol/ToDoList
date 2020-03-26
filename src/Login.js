@@ -23,6 +23,7 @@ export default class Login extends React.Component {
     let {user, password} = this.state;
     let auth = await authService.login(user, password);
     if (auth.authenticated) {
+      //salvam userul si parola in serviciul de autentificare ca sa le avem pt toate callurile din celalalte pagini
       authService.user = user;
       authService.password = password;
       Actions.toDoList();

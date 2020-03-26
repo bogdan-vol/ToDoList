@@ -22,6 +22,7 @@ export default class Register extends React.Component {
   };
 
   register = async () => {
+    //uita-te la requestul de register din serverul node .../user/register
     let {user, password} = this.state;
     let reg = await authService.register(user, password);
     if (reg.err)
@@ -29,6 +30,7 @@ export default class Register extends React.Component {
         cancelable: false,
       });
     if (reg.authenticated) {
+      //dupa register ii logic ca userul ii autentificat deci salvam userul si parola
       authService.user = user;
       authService.password = password;
       Actions.toDoList();
@@ -37,6 +39,8 @@ export default class Register extends React.Component {
 
   render() {
     let {user, password, passwordRepeated} = this.state;
+
+    //face disable la butonul de register pana sunt indeplinnite cerintele ce inregistrare (parola de minim 8 caractere etc)
     let registerDisabled =
       !user || password.length < 8 || password !== passwordRepeated;
     return (
@@ -55,6 +59,7 @@ export default class Register extends React.Component {
               placeholder={'Username'}
             />
 
+            {/* aici sunt conditionate niste mesaje de eroare */}
             {!!password && password.length < 8 && (
               <Text
                 style={{
@@ -71,6 +76,7 @@ export default class Register extends React.Component {
               placeholder={'Password'}
             />
 
+            {/* si aici sunt conditionate niste mesaje de eroare */}
             {password !== passwordRepeated && !!passwordRepeated && (
               <Text
                 style={{
@@ -87,12 +93,12 @@ export default class Register extends React.Component {
               placeholder={'Repeat password'}
             />
             <TouchableOpacity
+              onPress={this.register}
               disabled={registerDisabled}
               style={[
                 styles.registerButton,
                 registerDisabled ? {opacity: 0.5} : {},
-              ]}
-              onPress={this.register}>
+              ]}>
               <Text style={styles.loginText}>Register</Text>
             </TouchableOpacity>
           </ScrollView>

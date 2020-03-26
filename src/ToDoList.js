@@ -8,9 +8,7 @@ export default class ToDoList extends React.Component {
   state = {todos: []};
 
   componentDidMount() {
-    todoService.getTodos().then(todos => {
-      this.setState({todos});
-    });
+    todoService.getTodos().then(todos => this.setState({todos}));
   }
 
   render() {
@@ -18,6 +16,9 @@ export default class ToDoList extends React.Component {
     return (
       <ScrollView style={styles.content}>
         <SafeAreaView style={{flex: 1}}>
+          {/* maparea de care iti vorbeam pt afisarea rezultatelor din db.
+          Aici le afisezi tu pe restu si le stilizezi cum doresti.
+          Mai fa si butonul de delete pt care ai deja endpoint (uita-te in serverul node). */}
           {todos.map(td => (
             <React.Fragment>
               <Text>{td.name}</Text>
