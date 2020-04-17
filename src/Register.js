@@ -82,7 +82,7 @@ export default class Register extends React.Component {
                 style={{
                   color: 'rgba(255, 50, 100, 1)',
                 }}>
-                Passwords musth match!
+                Passwords must match!
               </Text>
             )}
             <TextInput
