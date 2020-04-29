@@ -20,13 +20,12 @@ export default class ToDoList extends React.Component {
     todos: [],
     addToDoModalState: {visible: false},
     showToDoModalState: {visible: false},
+    deleteToDoState: {visible: false},
   };
 
   componentDidMount() {
     todoService.getTodos().then(todos => this.setState({todos}));
   }
-
-  delete = async () => {};
 
   onTodoPress = td => {
     this.setState({showToDoModalState: {visible: true, ...td}});
@@ -44,6 +43,18 @@ export default class ToDoList extends React.Component {
     );
   };
 
+  deleteTodo = () => {
+    this.setState(
+      ({todos, deleteToDoState}) => ({
+        deleteToDoState: {...deleteToDoState, visible: false},
+        todos: [deleteToDoState, ...todos],
+      }),
+      () => {
+        todoService.deleteTodo(this.state.deleteToDoState).then(() => {});
+      },
+    );
+  };
+
   render() {
     let {todos, addToDoModalState, showToDoModalState} = this.state;
 
@@ -51,10 +62,10 @@ export default class ToDoList extends React.Component {
       <SafeAreaView style={{flex: 1, padding: 10}}>
         <Text style={styles.title}>TO DO</Text>
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-          <Text style={styles.todo}>Name</Text>
-          <Text style={styles.todo}>Date</Text>
-          <Text style={styles.todo}>Location</Text>
-          <Text style={styles.todo}>...</Text>
+          <Text style={styles.todoTitle}>Name</Text>
+          <Text style={styles.todoTitle}>Date</Text>
+          <Text style={styles.todoTitle}>Location</Text>
+          <Text style={styles.todoTitle}>...</Text>
         </View>
         <ScrollView style={styles.content}>
           {/* maparea de care iti vorbeam pt afisarea rezultatelor din db.
@@ -71,15 +82,19 @@ export default class ToDoList extends React.Component {
                 justifyContent: 'space-between',
                 backgroundColor:
                   td.importance === 'high'
-                    ? 'red'
+                    ? '#F59791'
                     : td.importance === 'medium'
-                    ? 'yellow'
-                    : 'green',
+                    ? '#F3F75F'
+                    : '#95EE90',
+                    borderWidth: 5,
+                    borderRadius: 10,
+                    borderColor: '#FFFFFF'
               }}>
               <Text style={styles.todo}>{td.name}</Text>
               <Text style={styles.todo}>{td.date}</Text>
               <Text style={styles.todo}>{td.location}</Text>
               <TouchableOpacity
+                onPress={this.deleteTodo}
                 style={{
                   padding: 10,
                   alignContent: 'center',
@@ -102,7 +117,7 @@ export default class ToDoList extends React.Component {
           visible={addToDoModalState.visible}>
           <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,.5)'}}>
             <TextInput
-              style={{backgroundColor: 'white', borderWidth: 1}}
+              style={styles.addTodo}
               placeholder={'Name'}
               value={addToDoModalState.name}
               onChangeText={name =>
@@ -110,7 +125,7 @@ export default class ToDoList extends React.Component {
               }
             />
             <TextInput
-              style={{backgroundColor: 'white', borderWidth: 1}}
+              style={styles.addTodo}
               placeholder={'Type'}
               value={addToDoModalState.type}
               onChangeText={type =>
@@ -118,7 +133,7 @@ export default class ToDoList extends React.Component {
               }
             />
             <TextInput
-              style={{backgroundColor: 'white', borderWidth: 1}}
+              style={styles.addTodo}
               placeholder={'Date'}
               value={addToDoModalState.date}
               onChangeText={date =>
@@ -126,7 +141,7 @@ export default class ToDoList extends React.Component {
               }
             />
             <TextInput
-              style={{backgroundColor: 'white', borderWidth: 1}}
+              style={styles.addTodo}
               placeholder={'Time'}
               value={addToDoModalState.time}
               onChangeText={time =>
@@ -134,7 +149,7 @@ export default class ToDoList extends React.Component {
               }
             />
             <TextInput
-              style={{backgroundColor: 'white', borderWidth: 1}}
+              style={styles.addTodo}
               placeholder={'Location'}
               value={addToDoModalState.location}
               onChangeText={location =>
@@ -144,7 +159,7 @@ export default class ToDoList extends React.Component {
               }
             />
             <TextInput
-              style={{backgroundColor: 'white', borderWidth: 1}}
+              style={styles.addTodo}
               placeholder={'Importance'}
               value={addToDoModalState.importance}
               onChangeText={importance =>
@@ -153,8 +168,24 @@ export default class ToDoList extends React.Component {
                 })
               }
             />
+
+            <View style={{flexDirection: 'row'}}>
+              <Text>Importance</Text>
+              <TouchableOpacity 
+                style={styles.importanceHigh}> 
+                <Text style={{color: '#FFFFFF'}}>high</Text>
+              </TouchableOpacity>
+              <TouchableOpacity>
+                style={styles.importanceMedium}>
+                <Text>medium</Text>
+              </TouchableOpacity>
+              {/* <TouchableOpacity>
+                style={styles.importanceLow}>
+                <Text>low</Text>
+              </TouchableOpacity> */}
+            </View>
             <TextInput
-              style={{backgroundColor: 'white', borderWidth: 1}}
+              style={styles.addTodo}
               placeholder={'Finished'}
               value={addToDoModalState.finished}
               onChangeText={finished =>
@@ -166,15 +197,15 @@ export default class ToDoList extends React.Component {
             <View style={{flexDirection: 'row'}}>
               <TouchableOpacity
                 onPress={this.addTodo}
-                style={{flex: 1, backgroundColor: 'lightblue', padding: 10}}>
-                <Text>Add</Text>
+                style={styles.addButton}>
+                <Text style={styles.buttonText}>Add</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
                   this.setState({addToDoModalState: {visible: false}})
                 }
-                style={{flex: 1, backgroundColor: 'red', padding: 10}}>
-                <Text>Cancel</Text>
+                style={styles.cancelButton}>
+                <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -253,25 +284,61 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 5,
   },
+  todoTitle: {
+    fontSize: 17,
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 5,
+    fontWeight: 'bold'
+  },
   todo: {
     fontSize: 15,
     paddingTop: 10,
     paddingBottom: 10,
+    paddingLeft: 5
   },
-  deleteButton: {
-    height: 20,
-    marginRight: 160,
-    marginLeft: 160,
-    backgroundColor: '#0489B1',
+  addTodo: {
+    backgroundColor: 'white',
     borderWidth: 0.5,
-    borderColor: '#0489B1',
-    borderRadius: 5,
+    borderRadius: 10,
+    paddingLeft: 10,
+    paddingRight: 10
+  },
+  importanceHigh: {
+    backgroundColor: '#F59791',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 0,
-    marginBottom: 3,
+    paddingLeft: 10,
+    paddingRight: 10,
   },
-  deleteText: {
-    color: '#fff',
-    fontSize: 17,
+  importanceMedium: {
+    backgroundColor: '#F3F75F',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 10,
+    paddingRight: 10,
   },
+  importanceLow: {
+    backgroundColor: '#95EE90',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 10,
+    paddingRight: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 20
+  },
+  addButton: {
+    flex: 1,
+    backgroundColor: '#CF6ED3',
+    alignItems: 'center',
+    padding: 10
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#923BAF',
+    alignItems: 'center',
+    padding: 10
+  }
 });

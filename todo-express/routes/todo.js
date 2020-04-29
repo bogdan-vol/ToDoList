@@ -21,8 +21,7 @@ router.post('/todos', async (req, res) => {
   let {authenticated, userId} = await authentication(req.headers);
   if (!authenticated) return res.send({authenticated: false});
   let {name, type, date, time, location, importance, finished} = req.body;
-  db.all(
-    'INSERT INTO todo VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
+  db.all('INSERT INTO todo VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
     [name, type, date, time, location, importance, finished, userId],
     (e, r) => {
       if (e) return res.send({err: e.toString()});
@@ -38,8 +37,7 @@ router.put('/todos', async (req, res) => {
   let {authenticated, userId} = await authentication(req.headers);
   if (!authenticated) return res.send({authenticated: false});
   let {name, type, date, time, location, importance, finished} = req.body;
-  db.all(
-    'UPDATE todo SET name = ?, type = ?, date = ?, time = ?, location = ?, importance = ?, finished = ?;',
+  db.all('UPDATE todo SET name = ?, type = ?, date = ?, time = ?, location = ?, importance = ?, finished = ?;',
     [name, type, date, time, location, importance, finished, userId],
     (e, r) => {
       if (e) return res.send({err: e.toString()});
@@ -55,8 +53,7 @@ router.delete('/todos/:id', async (req, res) => {
   if (!req.headers) return res.send({authenticated: false});
   let {authenticated, userId} = await authentication(req.headers);
   if (!authenticated) return res.send({authenticated: false});
-  db.all(
-    'DELETE FROM todo WHERE ROWID = ? AND id_user = ?',
+  db.all('DELETE FROM todo WHERE ROWID = ? AND id_user = ?',
     [req.params.id, userId],
     (e, r) => {
       if (e) return res.send({err: e.toString()});
