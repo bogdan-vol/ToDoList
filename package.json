@@ -30,5 +30,12 @@
   },
   "jest": {
     "preset": "react-native"
+  },
+  "prettier": {
+    "bracketSpacing": true,
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "trailingComma": "none",
+    "semi": true
   }
 }

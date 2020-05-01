@@ -8,7 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
+  TouchableOpacity
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -18,59 +18,62 @@ import todoService from './services/todo.service';
 export default class ToDoList extends React.Component {
   state = {
     todos: [],
-    addToDoModalState: {visible: false},
-    showToDoModalState: {visible: false},
-    deleteToDoState: {visible: false},
+    addToDoModalState: { visible: false },
+    showToDoModalState: { visible: false }
   };
 
   componentDidMount() {
-    todoService.getTodos().then(todos => this.setState({todos}));
+    todoService.getTodos().then(todos => {
+      console.log(todos);
+      this.setState({ todos });
+    });
   }
 
   onTodoPress = td => {
-    this.setState({showToDoModalState: {visible: true, ...td}});
+    this.setState({ showToDoModalState: { visible: true, ...td } });
   };
 
   addTodo = () => {
     this.setState(
-      ({todos, addToDoModalState}) => ({
-        addToDoModalState: {...addToDoModalState, visible: false},
-        todos: [addToDoModalState, ...todos],
+      ({ todos, addToDoModalState }) => ({
+        addToDoModalState: { ...addToDoModalState, visible: false },
+        todos: [addToDoModalState, ...todos]
       }),
       () => {
         todoService.postTodo(this.state.addToDoModalState).then(() => {});
-      },
+      }
     );
   };
 
-  deleteTodo = () => {
+  deleteTodo = id => {
+    console.log(id);
+    console.log('before', this.state.todos); //log inainte sa stergi din todos
     this.setState(
-      ({todos, deleteToDoState}) => ({
-        deleteToDoState: {...deleteToDoState, visible: false},
-        todos: [deleteToDoState, ...todos],
+      ({ todos }) => ({
+        todos:
+          /* aici trebuie sa stergi din arrayul todos obiectul cu idul care iti vine in functie ca parametru */
+          []
       }),
       () => {
-        todoService.deleteTodo(this.state.deleteToDoState).then(() => {});
-      },
+        console.log('after', this.state.todos); //log dupa ce ai sters din todos
+        todoService.deleteTodo(id).then(() => {});
+      }
     );
   };
 
   render() {
-    let {todos, addToDoModalState, showToDoModalState} = this.state;
+    let { todos, addToDoModalState, showToDoModalState } = this.state;
 
     return (
-      <SafeAreaView style={{flex: 1, padding: 10}}>
+      <SafeAreaView style={{ flex: 1, padding: 10 }}>
         <Text style={styles.title}>TO DO</Text>
-        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={styles.todoTitle}>Name</Text>
           <Text style={styles.todoTitle}>Date</Text>
           <Text style={styles.todoTitle}>Location</Text>
           <Text style={styles.todoTitle}>...</Text>
         </View>
         <ScrollView style={styles.content}>
-          {/* maparea de care iti vorbeam pt afisarea rezultatelor din db.
-          Aici le afisezi tu pe restu si le stilizezi cum doresti.
-          Mai fa si butonul de delete pt care ai deja endpoint (uita-te in serverul node). */}
           {todos.map(td => (
             <TouchableOpacity
               key={td.rowid}
@@ -86,42 +89,46 @@ export default class ToDoList extends React.Component {
                     : td.importance === 'medium'
                     ? '#F3F75F'
                     : '#95EE90',
-                    borderWidth: 5,
-                    borderRadius: 10,
-                    borderColor: '#FFFFFF'
+                borderWidth: 5,
+                borderRadius: 10,
+                borderColor: '#FFFFFF'
               }}>
               <Text style={styles.todo}>{td.name}</Text>
               <Text style={styles.todo}>{td.date}</Text>
               <Text style={styles.todo}>{td.location}</Text>
               <TouchableOpacity
-                onPress={this.deleteTodo}
+                onPress={() => this.deleteTodo(td.rowid)}
                 style={{
                   padding: 10,
                   alignContent: 'center',
-                  justifyContent: 'center',
+                  justifyContent: 'center'
                 }}>
                 <Icon name="trash-o" size={25} color="black" />
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
-          <View style={{height: 60}} />
+          <View style={{ height: 60 }} />
         </ScrollView>
         <TouchableOpacity
           style={styles.addContainer}
-          onPress={() => this.setState({addToDoModalState: {visible: true}})}>
+          onPress={() =>
+            this.setState({ addToDoModalState: { visible: true } })
+          }>
           <Icon name="plus" size={30} color="black" />
         </TouchableOpacity>
         <Modal
           transparent={true}
           animationType={'slide'}
           visible={addToDoModalState.visible}>
-          <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,.5)'}}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
             <TextInput
               style={styles.addTodo}
               placeholder={'Name'}
               value={addToDoModalState.name}
               onChangeText={name =>
-                this.setState({addToDoModalState: {...addToDoModalState, name}})
+                this.setState({
+                  addToDoModalState: { ...addToDoModalState, name }
+                })
               }
             />
             <TextInput
@@ -129,7 +136,9 @@ export default class ToDoList extends React.Component {
               placeholder={'Type'}
               value={addToDoModalState.type}
               onChangeText={type =>
-                this.setState({addToDoModalState: {...addToDoModalState, type}})
+                this.setState({
+                  addToDoModalState: { ...addToDoModalState, type }
+                })
               }
             />
             <TextInput
@@ -137,7 +146,9 @@ export default class ToDoList extends React.Component {
               placeholder={'Date'}
               value={addToDoModalState.date}
               onChangeText={date =>
-                this.setState({addToDoModalState: {...addToDoModalState, date}})
+                this.setState({
+                  addToDoModalState: { ...addToDoModalState, date }
+                })
               }
             />
             <TextInput
@@ -145,7 +156,9 @@ export default class ToDoList extends React.Component {
               placeholder={'Time'}
               value={addToDoModalState.time}
               onChangeText={time =>
-                this.setState({addToDoModalState: {...addToDoModalState, time}})
+                this.setState({
+                  addToDoModalState: { ...addToDoModalState, time }
+                })
               }
             />
             <TextInput
@@ -154,7 +167,7 @@ export default class ToDoList extends React.Component {
               value={addToDoModalState.location}
               onChangeText={location =>
                 this.setState({
-                  addToDoModalState: {...addToDoModalState, location},
+                  addToDoModalState: { ...addToDoModalState, location }
                 })
               }
             />
@@ -164,25 +177,19 @@ export default class ToDoList extends React.Component {
               value={addToDoModalState.importance}
               onChangeText={importance =>
                 this.setState({
-                  addToDoModalState: {...addToDoModalState, importance},
+                  addToDoModalState: { ...addToDoModalState, importance }
                 })
               }
             />
 
-            <View style={{flexDirection: 'row'}}>
+            <View style={{ flexDirection: 'row' }}>
               <Text>Importance</Text>
-              <TouchableOpacity 
-                style={styles.importanceHigh}> 
-                <Text style={{color: '#FFFFFF'}}>high</Text>
+              <TouchableOpacity style={styles.importanceHigh}>
+                <Text style={{ color: '#FFFFFF' }}>high</Text>
               </TouchableOpacity>
               <TouchableOpacity>
-                style={styles.importanceMedium}>
-                <Text>medium</Text>
+                style={styles.importanceMedium}><Text>medium</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity>
-                style={styles.importanceLow}>
-                <Text>low</Text>
-              </TouchableOpacity> */}
             </View>
             <TextInput
               style={styles.addTodo}
@@ -190,19 +197,17 @@ export default class ToDoList extends React.Component {
               value={addToDoModalState.finished}
               onChangeText={finished =>
                 this.setState({
-                  addToDoModalState: {...addToDoModalState, finished},
+                  addToDoModalState: { ...addToDoModalState, finished }
                 })
               }
             />
-            <View style={{flexDirection: 'row'}}>
-              <TouchableOpacity
-                onPress={this.addTodo}
-                style={styles.addButton}>
+            <View style={{ flexDirection: 'row' }}>
+              <TouchableOpacity onPress={this.addTodo} style={styles.addButton}>
                 <Text style={styles.buttonText}>Add</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
-                  this.setState({addToDoModalState: {visible: false}})
+                  this.setState({ addToDoModalState: { visible: false } })
                 }
                 style={styles.cancelButton}>
                 <Text style={styles.buttonText}>Cancel</Text>
@@ -216,9 +221,9 @@ export default class ToDoList extends React.Component {
           visible={showToDoModalState.visible}>
           <TouchableOpacity
             onPress={() =>
-              this.setState({showToDoModalState: {visible: false}})
+              this.setState({ showToDoModalState: { visible: false } })
             }
-            style={{flex: 1, backgroundColor: 'rgba(0,0,0,.5)'}}>
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
             <View style={styles.modalItemContainer}>
               <Text style={styles.todo}>Name:</Text>
               <Text style={styles.todo}>{showToDoModalState.name}</Text>
@@ -258,7 +263,7 @@ const styles = StyleSheet.create({
     padding: 10,
     flexDirection: 'row',
     backgroundColor: 'white',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   },
   addContainer: {
     right: 10,
@@ -269,10 +274,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     backgroundColor: 'red',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   content: {
-    flex: 1,
+    flex: 1
   },
   title: {
     fontFamily: 'sans-serif-medium',
@@ -282,7 +287,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
     textAlign: 'center',
-    letterSpacing: 5,
+    letterSpacing: 5
   },
   todoTitle: {
     fontSize: 17,
@@ -309,21 +314,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingLeft: 10,
-    paddingRight: 10,
+    paddingRight: 10
   },
   importanceMedium: {
     backgroundColor: '#F3F75F',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingLeft: 10,
-    paddingRight: 10,
+    paddingRight: 10
   },
   importanceLow: {
     backgroundColor: '#95EE90',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingLeft: 10,
-    paddingRight: 10,
+    paddingRight: 10
   },
   buttonText: {
     color: '#FFFFFF',
