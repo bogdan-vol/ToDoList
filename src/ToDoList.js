@@ -137,8 +137,8 @@ export default class ToDoList extends React.Component {
             }>
             {/* <Icon name="plus" size={30} color="black" /> */}
             <Image
-              style={{width: 50, height: 50}}
-              source={require('../assets/icons/add_icon.png')}
+              style={{width: 60, height: 60, marginBottom: 30, marginRight: 30}}
+              source={require('../assets/icons/add_icon2.png')}
             />
           </TouchableOpacity>
           <Modal
