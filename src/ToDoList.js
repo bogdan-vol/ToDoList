@@ -5,21 +5,27 @@ import {
   Text,
   Modal,
   Image,
+  Animated,
   TextInput,
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
-  ImageBackground
+  ImageBackground,
+  TouchableOpacity
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import todoService from './services/todo.service';
 
 export default class ToDoList extends React.Component {
+  translateMenuX = new Animated.Value(-1000);
+
   state = {
     todos: [],
+    showDatePicker: false,
+    showTimePicker: false,
     addToDoModalState: { visible: false },
     showToDoModalState: { visible: false }
   };
@@ -55,9 +61,9 @@ export default class ToDoList extends React.Component {
       ({ todos }) => {
         /* aici trebuie sa stergi din arrayul todos obiectul cu idul care iti vine in functie ca parametru */
         let index;
-        for(var i = 0; i < todos.length; i++) {
-          if(todos[i].rowid == id) {
-              index = i;
+        for (var i = 0; i < todos.length; i++) {
+          if (todos[i].rowid == id) {
+            index = i;
           }
         }
         return todos.splice(index, 1);
@@ -69,145 +75,213 @@ export default class ToDoList extends React.Component {
     );
   };
 
+  toggleMenu = toValue => {
+    Animated.timing(this.translateMenuX, {
+      toValue,
+      speed: 100,
+      useNativeDriver: true
+    }).start();
+  };
+
+  sortBy = key => {
+    this.setState(({ todos }) => ({
+      todos: todos.sort((a, b) => {
+        return a[key] < b[key] ? -1 : 1;
+      })
+    }));
+  };
+
+  onDateChange = date => {
+    if (date.type === 'dismissed')
+      return this.setState({ showDatePicker: false });
+    this.setState(({ addToDoModalState }) => ({
+      showDatePicker: false,
+      addToDoModalState: {
+        ...addToDoModalState,
+        date: this.formatDate(date.nativeEvent.timestamp)
+      }
+    }));
+  };
+
+  onTimeChange = time => {
+    if (time.type === 'dismissed')
+      return this.setState({ showTimePicker: false });
+    this.setState(({ addToDoModalState }) => ({
+      showTimePicker: false,
+      addToDoModalState: {
+        ...addToDoModalState,
+        time: this.formatTime(time.nativeEvent.timestamp)
+      }
+    }));
+  };
+
+  formatDate = date => {
+    const d = new Date(date);
+    return `${d.getDate()}/${d.getMonth()}/${d.getFullYear()}`;
+  };
+
+  formatTime = time => {
+    const t = new Date(time);
+    let h = t.getHours();
+    let m = t.getMinutes();
+    if (h < 10) h = `0${h}`;
+    if (m < 10) m = `0${m}`;
+    return `${h}:${m}`;
+  };
+
   render() {
-    let { todos, addToDoModalState, showToDoModalState } = this.state;
+    let {
+      todos,
+      addToDoModalState,
+      showToDoModalState,
+      showDatePicker,
+      showTimePicker
+    } = this.state;
 
     return (
-      <ImageBackground
-        source={require('../assets/images/todo.png')}
-        style={{width: '100%', height: '100%'}}>
-        <SafeAreaView style={{ flex: 1, padding: 10 }}>
-          <Image
-          style={{width: 100, height: 100}}
-          source={require('../assets/icons/todo_logo.png')}
-          />
-          {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={styles.todoTitle}>Name</Text>
-            <Text style={styles.todoTitle}>Date</Text>
-            <Text style={styles.todoTitle}>Location</Text>
-            <Text style={styles.todoTitle}>...</Text>
-          </View> */}
-          <ScrollView style={styles.content}>
-            {todos.map(td => (
+      <>
+        <ImageBackground
+          source={require('../assets/images/todo.png')}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <SafeAreaView style={{ flex: 1, padding: 10 }}>
+            <View
+              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+            >
               <TouchableOpacity
-                key={td.rowid}
-                onPress={() => this.onTodoPress(td)}
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor:
-                    td.importance === 'high'
-                      ? '#A81996'
-                      : td.importance === 'medium'
-                      ? '#D077CB'
-                      : '#F5AEF1',
-                  borderTopLeftRadius: 20,
-                  borderBottomLeftRadius: 20,
-                }}>
-                <Text style={styles.todoName}>{td.name}</Text>
-                <Text style={styles.todo}>{td.time}</Text>
-                {/* <Text style={styles.todo}>{td.type}</Text> */}
-                {/* <Text style={styles.todo}>{td.date}</Text> */}
-                {/* <Text style={styles.todo}>{td.location}</Text> */}
-                {/* <TouchableOpacity
-                  onPress={() => this.details(td.rowid)}
-                  style={styles.details}>
-                    <Text style={styles.detailsText}>Details</Text>
-                </TouchableOpacity> */}
-                <TouchableOpacity
-                  onPress={() => this.deleteTodo(td.rowid)}
-                  style={{
-                    padding: 10,
-                    alignContent: 'center',
-                    justifyContent: 'center'
-                  }}>
-                  <Icon name="trash-o" size={25} color="white" />
-                </TouchableOpacity>
+                style={{ padding: 10 }}
+                onPress={() => this.toggleMenu(0)}
+              >
+                <Icon name='bars' size={25} color='white' />
               </TouchableOpacity>
-            ))}
-            <View style={{ height: 60 }} />
-          </ScrollView>
-          <TouchableOpacity
-            style={styles.addContainer}
-            onPress={() =>
-              this.setState({ addToDoModalState: { visible: true } })
-            }>
-            {/* <Icon name="plus" size={30} color="black" /> */}
-            <Image
-              style={{width: 60, height: 60, marginBottom: 30, marginRight: 30}}
-              source={require('../assets/icons/add_icon2.png')}
-            />
-          </TouchableOpacity>
-          <Modal
-            transparent={true}
-            animationType={'slide'}
-            visible={addToDoModalState.visible}>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
-              <TextInput
-                style={styles.addTodo}
-                placeholder={'Name'}
-                value={addToDoModalState.name}
-                onChangeText={name =>
-                  this.setState({
-                    addToDoModalState: { ...addToDoModalState, name }
-                  })
-                }
+              <Image
+                style={{ width: 100, height: 100 }}
+                source={require('../assets/icons/todo_logo.png')}
               />
-              <TextInput
-                style={styles.addTodo}
-                placeholder={'Type'}
-                value={addToDoModalState.type}
-                onChangeText={type =>
-                  this.setState({
-                    addToDoModalState: { ...addToDoModalState, type }
-                  })
-                }
+            </View>
+            <ScrollView style={styles.content}>
+              {todos.map(td => (
+                <TouchableOpacity
+                  key={td.rowid}
+                  onPress={() => this.onTodoPress(td)}
+                  style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor:
+                      td.importance === 'high'
+                        ? '#A81996'
+                        : td.importance === 'medium'
+                        ? '#D077CB'
+                        : '#F5AEF1',
+                    borderTopLeftRadius: 20,
+                    borderBottomLeftRadius: 20
+                  }}
+                >
+                  <Text style={styles.todoName}>{td.name}</Text>
+                  <Text style={styles.todo}>{td.time}</Text>
+                  <TouchableOpacity
+                    onPress={() => this.deleteTodo(td.rowid)}
+                    style={{
+                      padding: 10,
+                      alignContent: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Icon name='trash-o' size={25} color='white' />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+              <View style={{ height: 60 }} />
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.addContainer}
+              onPress={() =>
+                this.setState({ addToDoModalState: { visible: true } })
+              }
+            >
+              <Image
+                style={{
+                  width: 60,
+                  height: 60,
+                  marginBottom: 30,
+                  marginRight: 30
+                }}
+                source={require('../assets/icons/add_icon2.png')}
               />
-              <TextInput
-                style={styles.addTodo}
-                placeholder={'Date'}
-                value={addToDoModalState.date}
-                onChangeText={date =>
-                  this.setState({
-                    addToDoModalState: { ...addToDoModalState, date }
-                  })
-                }
-              />
-              <TextInput
-                style={styles.addTodo}
-                placeholder={'Time'}
-                value={addToDoModalState.time}
-                onChangeText={time =>
-                  this.setState({
-                    addToDoModalState: { ...addToDoModalState, time }
-                  })
-                }
-              />
-              <TextInput
-                style={styles.addTodo}
-                placeholder={'Location'}
-                value={addToDoModalState.location}
-                onChangeText={location =>
-                  this.setState({
-                    addToDoModalState: { ...addToDoModalState, location }
-                  })
-                }
-              />
-              <TextInput
-                style={styles.addTodo}
-                placeholder={'Importance'}
-                value={addToDoModalState.importance}
-                onChangeText={importance =>
-                  this.setState({
-                    addToDoModalState: { ...addToDoModalState, importance }
-                  })
-                }
-              />
+            </TouchableOpacity>
+            <Modal
+              transparent={true}
+              animationType={'slide'}
+              visible={addToDoModalState.visible}
+            >
+              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
+                <TextInput
+                  style={styles.addTodo}
+                  placeholder={'Name'}
+                  value={addToDoModalState.name}
+                  onChangeText={name =>
+                    this.setState({
+                      addToDoModalState: { ...addToDoModalState, name }
+                    })
+                  }
+                />
+                <TextInput
+                  style={styles.addTodo}
+                  placeholder={'Type'}
+                  value={addToDoModalState.type}
+                  onChangeText={type =>
+                    this.setState({
+                      addToDoModalState: { ...addToDoModalState, type }
+                    })
+                  }
+                />
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={async () => this.setState({ showDatePicker: true })}
+                >
+                  <TextInput
+                    editable={false}
+                    style={styles.addTodo}
+                    placeholder={'Date'}
+                    value={addToDoModalState.date}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={async () => this.setState({ showTimePicker: true })}
+                >
+                  <TextInput
+                    editable={false}
+                    style={styles.addTodo}
+                    placeholder={'Time'}
+                    value={addToDoModalState.time}
+                  />
+                  <TextInput
+                    style={styles.addTodo}
+                    placeholder={'Location'}
+                    value={addToDoModalState.location}
+                    onChangeText={location =>
+                      this.setState({
+                        addToDoModalState: { ...addToDoModalState, location }
+                      })
+                    }
+                  />
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.addTodo}
+                  placeholder={'Importance'}
+                  value={addToDoModalState.importance}
+                  onChangeText={importance =>
+                    this.setState({
+                      addToDoModalState: { ...addToDoModalState, importance }
+                    })
+                  }
+                />
 
-              {/* <View style={{ flexDirection: 'row' }}>
+                {/* <View style={{ flexDirection: 'row' }}>
                 <Text>Importance</Text>
                 <TouchableOpacity style={styles.importanceHigh}>
                   <Text style={{ color: '#FFFFFF' }}>high</Text>
@@ -216,71 +290,149 @@ export default class ToDoList extends React.Component {
                   style={styles.importanceMedium}><Text>medium</Text>
                 </TouchableOpacity>
               </View> */}
-              <TextInput
-                style={styles.addTodo}
-                placeholder={'Finished'}
-                value={addToDoModalState.finished}
-                onChangeText={finished =>
-                  this.setState({
-                    addToDoModalState: { ...addToDoModalState, finished }
-                  })
-                }
-              />
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity onPress={this.addTodo} style={styles.addButton}>
-                  <Text style={styles.buttonText}>Add</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() =>
-                    this.setState({ addToDoModalState: { visible: false } })
+                <TextInput
+                  style={styles.addTodo}
+                  placeholder={'Finished'}
+                  value={addToDoModalState.finished}
+                  onChangeText={finished =>
+                    this.setState({
+                      addToDoModalState: { ...addToDoModalState, finished }
+                    })
                   }
-                  style={styles.cancelButton}>
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
+                />
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    onPress={this.addTodo}
+                    style={styles.addButton}
+                  >
+                    <Text style={styles.buttonText}>Add</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      this.setState({ addToDoModalState: { visible: false } })
+                    }
+                    style={styles.cancelButton}
+                  >
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
+            </Modal>
+            <Modal
+              transparent={true}
+              animationType={'slide'}
+              visible={showToDoModalState.visible}
+            >
+              <TouchableOpacity
+                onPress={() =>
+                  this.setState({ showToDoModalState: { visible: false } })
+                }
+                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}
+              >
+                <View style={styles.modalItemContainer}>
+                  <Text style={styles.toDoModalDetailsRow}>Name:</Text>
+                  <Text style={styles.toDoModalDetailsRow}>
+                    {showToDoModalState.name}
+                  </Text>
+                </View>
+                <View style={styles.modalItemContainer}>
+                  <Text style={styles.toDoModalDetailsRow}>Type:</Text>
+                  <Text style={styles.toDoModalDetailsRow}>
+                    {showToDoModalState.type}
+                  </Text>
+                </View>
+                <View style={styles.modalItemContainer}>
+                  <Text style={styles.toDoModalDetailsRow}>Date:</Text>
+                  <Text style={styles.toDoModalDetailsRow}>
+                    {showToDoModalState.date}
+                  </Text>
+                </View>
+                <View style={styles.modalItemContainer}>
+                  <Text style={styles.toDoModalDetailsRow}>Time:</Text>
+                  <Text style={styles.toDoModalDetailsRow}>
+                    {showToDoModalState.time}
+                  </Text>
+                </View>
+                <View style={styles.modalItemContainer}>
+                  <Text style={styles.toDoModalDetailsRow}>Location:</Text>
+                  <Text style={styles.toDoModalDetailsRow}>
+                    {showToDoModalState.location}
+                  </Text>
+                </View>
+                <View style={styles.modalItemContainer}>
+                  <Text style={styles.toDoModalDetailsRow}>Importance:</Text>
+                  <Text style={styles.toDoModalDetailsRow}>
+                    {showToDoModalState.importance}
+                  </Text>
+                </View>
+                <View style={styles.modalItemContainer}>
+                  <Text style={styles.toDoModalDetailsRow}>Finished:</Text>
+                  <Text style={styles.toDoModalDetailsRow}>
+                    {showToDoModalState.finished}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Modal>
+          </SafeAreaView>
+        </ImageBackground>
+        <Animated.View
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            transform: [{ translateX: this.translateMenuX }]
+          }}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => this.toggleMenu(-1000)}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <View
+              style={{
+                height: '100%',
+                position: 'absolute',
+                backgroundColor: 'white'
+              }}
+            >
+              <TouchableOpacity
+                style={styles.sortTouchable}
+                onPress={() => this.sortBy('date')}
+              >
+                <Text style={{ margin: 10 }}>Sort By Date</Text>
+                <Icon name='caret-down' size={25} color='black' />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.sortTouchable}
+                onPress={() => this.sortBy('importance')}
+              >
+                <Text style={{ margin: 10 }}>Sort By Importance</Text>
+                <Icon name='caret-down' size={25} color='black' />
+              </TouchableOpacity>
             </View>
-          </Modal>
-          <Modal
-            transparent={true}
-            animationType={'slide'}
-            visible={showToDoModalState.visible}>
-            <TouchableOpacity
-              onPress={() =>
-                this.setState({ showToDoModalState: { visible: false } })
-              }
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.todo}>Name:</Text>
-                <Text style={styles.todo}>{showToDoModalState.name}</Text>
-              </View>
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.todo}>Type:</Text>
-                <Text style={styles.todo}>{showToDoModalState.type}</Text>
-              </View>
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.todo}>Date:</Text>
-                <Text style={styles.todo}>{showToDoModalState.date}</Text>
-              </View>
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.todo}>Time:</Text>
-                <Text style={styles.todo}>{showToDoModalState.time}</Text>
-              </View>
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.todo}>Location:</Text>
-                <Text style={styles.todo}>{showToDoModalState.location}</Text>
-              </View>
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.todo}>Importance:</Text>
-                <Text style={styles.todo}>{showToDoModalState.importance}</Text>
-              </View>
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.todo}>Finished:</Text>
-                <Text style={styles.todo}>{showToDoModalState.finished}</Text>
-              </View>
-            </TouchableOpacity>
-          </Modal>
-        </SafeAreaView>
-      </ImageBackground>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              timeZoneOffsetInMinutes={0}
+              value={new Date()}
+              is24Hour={true}
+              display='default'
+              mode={'date'}
+              onChange={this.onDateChange}
+            />
+          )}
+          {showTimePicker && (
+            <DateTimePicker
+              timeZoneOffsetInMinutes={0}
+              value={new Date()}
+              is24Hour={true}
+              display='default'
+              mode={'time'}
+              onChange={this.onTimeChange}
+            />
+          )}
+        </Animated.View>
+      </>
     );
   }
 }
@@ -346,11 +498,11 @@ const styles = StyleSheet.create({
     paddingRight: 5,
     paddingLeft: 5,
     paddingTop: 5,
-    marginBottom: 5,
+    marginBottom: 5
   },
   detailsText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 15
   },
   done: {
     height: 30,
@@ -369,7 +521,7 @@ const styles = StyleSheet.create({
   },
   doneText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 15
   },
   addTodo: {
     backgroundColor: 'white',
@@ -414,5 +566,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#8E3AC0',
     alignItems: 'center',
     padding: 10
+  },
+  toDoModalDetailsRow: {
+    fontSize: 15,
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 5,
+    color: 'black'
+  },
+  sortTouchable: {
+    padding: 10,
+    margin: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   }
 });
