@@ -5,13 +5,15 @@ import {
   Text,
   Modal,
   Image,
+  ToolbarAndroid,
   Animated,
   TextInput,
+  StatusBar,
   ScrollView,
   StyleSheet,
   SafeAreaView,
   ImageBackground,
-  TouchableOpacity
+  TouchableOpacity,
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -144,20 +146,35 @@ export default class ToDoList extends React.Component {
           source={require('../assets/images/todo.png')}
           style={{ width: '100%', height: '100%' }}
         >
+          <StatusBar
+            backgroundColor='#812A7B'
+            animated={true}>
+          </StatusBar>
+          <View style={{height: 60, backgroundColor: '#812A7B', flexDirection: 'row'}}>
+            <TouchableOpacity
+                  style={{ paddingTop: 20, paddingLeft: 10}}
+                  onPress={() => this.toggleMenu(0)}
+                >
+                  <Icon name='bars' size={25} color='white' />
+            </TouchableOpacity>
+            <View animationType={'slide'} style={{height: 30, width: 250, backgroundColor: '#ffffff', 
+              alignItems: 'center', flexDirection: 'row', paddingHorizontal: 5, marginTop: 20,
+              marginLeft: 50}}>
+                <View>
+                  <Icon name='search' size={20}></Icon>
+                </View>
+                <TextInput placeholder="Search" style={{fontSize: 20, marginLeft: 10, 
+                  paddingTop: 0, paddingBottom: 2}}></TextInput>
+            </View>
+              <Image
+                style={{ width: 50, height: 50, marginTop: 10, marginLeft: 20}}
+                source={require('../assets/icons/todo_logo.png')}
+              />
+          </View>
           <SafeAreaView style={{ flex: 1, padding: 10 }}>
             <View
               style={{ flexDirection: 'row', justifyContent: 'space-between' }}
             >
-              <TouchableOpacity
-                style={{ padding: 10 }}
-                onPress={() => this.toggleMenu(0)}
-              >
-                <Icon name='bars' size={25} color='white' />
-              </TouchableOpacity>
-              <Image
-                style={{ width: 100, height: 100 }}
-                source={require('../assets/icons/todo_logo.png')}
-              />
             </View>
             <ScrollView style={styles.content}>
               {todos.map(td => (
@@ -168,8 +185,9 @@ export default class ToDoList extends React.Component {
                     flex: 1,
                     alignItems: 'center',
                     flexDirection: 'row',
-                    justifyContent: 'center',
+                    // justifyContent: 'center',
                     justifyContent: 'space-between',
+                    // justifyContent: 'space-around',
                     backgroundColor:
                       td.importance === 'high'
                         ? '#A81996'
@@ -177,7 +195,8 @@ export default class ToDoList extends React.Component {
                         ? '#D077CB'
                         : '#F5AEF1',
                     borderTopLeftRadius: 20,
-                    borderBottomLeftRadius: 20
+                    borderBottomLeftRadius: 20,
+                    marginTop: 10
                   }}
                 >
                   <Text style={styles.todoName}>{td.name}</Text>
@@ -280,16 +299,6 @@ export default class ToDoList extends React.Component {
                     })
                   }
                 />
-
-                {/* <View style={{ flexDirection: 'row' }}>
-                <Text>Importance</Text>
-                <TouchableOpacity style={styles.importanceHigh}>
-                  <Text style={{ color: '#FFFFFF' }}>high</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  style={styles.importanceMedium}><Text>medium</Text>
-                </TouchableOpacity>
-              </View> */}
                 <TextInput
                   style={styles.addTodo}
                   placeholder={'Finished'}
@@ -399,14 +408,14 @@ export default class ToDoList extends React.Component {
                 style={styles.sortTouchable}
                 onPress={() => this.sortBy('date')}
               >
-                <Text style={{ margin: 10 }}>Sort By Date</Text>
+                <Text style={{ marginLeft: 2 }}>Sort By Date</Text>
                 <Icon name='caret-down' size={25} color='black' />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.sortTouchable}
                 onPress={() => this.sortBy('importance')}
               >
-                <Text style={{ margin: 10 }}>Sort By Importance</Text>
+                <Text style={{ marginLeft: 2, marginRight: 5}}>Sort By Importance</Text>
                 <Icon name='caret-down' size={25} color='black' />
               </TouchableOpacity>
             </View>
