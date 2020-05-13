@@ -13,7 +13,7 @@ import {
   StyleSheet,
   SafeAreaView,
   ImageBackground,
-  TouchableOpacity,
+  TouchableOpacity
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -131,13 +131,44 @@ export default class ToDoList extends React.Component {
     return `${h}:${m}`;
   };
 
+  onUpdate = () => {
+    let {
+      name,
+      type,
+      date,
+      time,
+      rowid,
+      location,
+      finished,
+      importance
+    } = this.state.showToDoModalState;
+    this.setState(({ todos }) => ({
+      showToDoModalState: { visible: false },
+      todos: todos.map(td =>
+        td.rowid === rowid
+          ? {
+              ...td,
+              name,
+              type,
+              date,
+              time,
+              location,
+              finished,
+              importance
+            }
+          : td
+      )
+    }));
+    todoService.updateTodo(rowid, this.state.showToDoModalState);
+  };
+
   render() {
     let {
       todos,
-      addToDoModalState,
-      showToDoModalState,
+      showTimePicker,
       showDatePicker,
-      showTimePicker
+      addToDoModalState,
+      showToDoModalState
     } = this.state;
 
     return (
@@ -146,36 +177,55 @@ export default class ToDoList extends React.Component {
           source={require('../assets/images/todo.png')}
           style={{ width: '100%', height: '100%' }}
         >
-          <StatusBar
-            backgroundColor='#812A7B'
-            animated={true}>
-          </StatusBar>
-          <View style={{height: 60, backgroundColor: '#812A7B', flexDirection: 'row'}}>
+          <StatusBar backgroundColor='#812A7B' animated={true} />
+          <View
+            style={{
+              height: 60,
+              backgroundColor: '#812A7B',
+              flexDirection: 'row'
+            }}
+          >
             <TouchableOpacity
-                  style={{ paddingTop: 20, paddingLeft: 10}}
-                  onPress={() => this.toggleMenu(0)}
-                >
-                  <Icon name='bars' size={25} color='white' />
+              style={{ paddingTop: 20, paddingLeft: 10 }}
+              onPress={() => this.toggleMenu(0)}
+            >
+              <Icon name='bars' size={25} color='white' />
             </TouchableOpacity>
-            <View animationType={'slide'} style={{height: 30, width: 250, backgroundColor: '#ffffff', 
-              alignItems: 'center', flexDirection: 'row', paddingHorizontal: 5, marginTop: 20,
-              marginLeft: 50}}>
-                <View>
-                  <Icon name='search' size={20}></Icon>
-                </View>
-                <TextInput placeholder="Search" style={{fontSize: 20, marginLeft: 10, 
-                  paddingTop: 0, paddingBottom: 2}}></TextInput>
-            </View>
-              <Image
-                style={{ width: 50, height: 50, marginTop: 10, marginLeft: 20}}
-                source={require('../assets/icons/todo_logo.png')}
+            <View
+              animationType={'slide'}
+              style={{
+                height: 30,
+                width: 250,
+                backgroundColor: '#ffffff',
+                alignItems: 'center',
+                flexDirection: 'row',
+                paddingHorizontal: 5,
+                marginTop: 20,
+                marginLeft: 50
+              }}
+            >
+              <View>
+                <Icon name='search' size={20} />
+              </View>
+              <TextInput
+                placeholder='Search'
+                style={{
+                  fontSize: 20,
+                  marginLeft: 10,
+                  paddingTop: 0,
+                  paddingBottom: 2
+                }}
               />
+            </View>
+            <Image
+              style={{ width: 50, height: 50, marginTop: 10, marginLeft: 20 }}
+              source={require('../assets/icons/todo_logo.png')}
+            />
           </View>
           <SafeAreaView style={{ flex: 1, padding: 10 }}>
             <View
               style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-            >
-            </View>
+            />
             <ScrollView style={styles.content}>
               {todos.map(td => (
                 <TouchableOpacity
@@ -237,26 +287,21 @@ export default class ToDoList extends React.Component {
               visible={addToDoModalState.visible}
             >
               <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
-                <TextInput
-                  style={styles.addTodo}
-                  placeholder={'Name'}
-                  value={addToDoModalState.name}
-                  onChangeText={name =>
-                    this.setState({
-                      addToDoModalState: { ...addToDoModalState, name }
-                    })
-                  }
-                />
-                <TextInput
-                  style={styles.addTodo}
-                  placeholder={'Type'}
-                  value={addToDoModalState.type}
-                  onChangeText={type =>
-                    this.setState({
-                      addToDoModalState: { ...addToDoModalState, type }
-                    })
-                  }
-                />
+                {['Name', 'Type'].map(item => (
+                  <TextInput
+                    style={styles.addTodo}
+                    placeholder={item}
+                    value={addToDoModalState[item.toLowerCase()]}
+                    onChangeText={text =>
+                      this.setState({
+                        addToDoModalState: {
+                          ...addToDoModalState,
+                          [item.toLowerCase()]: text
+                        }
+                      })
+                    }
+                  />
+                ))}
                 <TouchableOpacity
                   activeOpacity={1}
                   onPress={async () => this.setState({ showDatePicker: true })}
@@ -278,37 +323,22 @@ export default class ToDoList extends React.Component {
                     placeholder={'Time'}
                     value={addToDoModalState.time}
                   />
+                </TouchableOpacity>
+                {['Location', 'Importance', 'Finished'].map(item => (
                   <TextInput
                     style={styles.addTodo}
-                    placeholder={'Location'}
-                    value={addToDoModalState.location}
-                    onChangeText={location =>
+                    placeholder={item}
+                    value={addToDoModalState[item.toLowerCase()]}
+                    onChangeText={text =>
                       this.setState({
-                        addToDoModalState: { ...addToDoModalState, location }
+                        addToDoModalState: {
+                          ...addToDoModalState,
+                          [item.toLowerCase()]: text
+                        }
                       })
                     }
                   />
-                </TouchableOpacity>
-                <TextInput
-                  style={styles.addTodo}
-                  placeholder={'Importance'}
-                  value={addToDoModalState.importance}
-                  onChangeText={importance =>
-                    this.setState({
-                      addToDoModalState: { ...addToDoModalState, importance }
-                    })
-                  }
-                />
-                <TextInput
-                  style={styles.addTodo}
-                  placeholder={'Finished'}
-                  value={addToDoModalState.finished}
-                  onChangeText={finished =>
-                    this.setState({
-                      addToDoModalState: { ...addToDoModalState, finished }
-                    })
-                  }
-                />
+                ))}
                 <View style={{ flexDirection: 'row' }}>
                   <TouchableOpacity
                     onPress={this.addTodo}
@@ -332,55 +362,57 @@ export default class ToDoList extends React.Component {
               animationType={'slide'}
               visible={showToDoModalState.visible}
             >
-              <TouchableOpacity
-                onPress={() =>
-                  this.setState({ showToDoModalState: { visible: false } })
-                }
-                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}
-              >
-                <View style={styles.modalItemContainer}>
-                  <Text style={styles.toDoModalDetailsRow}>Name:</Text>
-                  <Text style={styles.toDoModalDetailsRow}>
-                    {showToDoModalState.name}
-                  </Text>
-                </View>
-                <View style={styles.modalItemContainer}>
-                  <Text style={styles.toDoModalDetailsRow}>Type:</Text>
-                  <Text style={styles.toDoModalDetailsRow}>
-                    {showToDoModalState.type}
-                  </Text>
-                </View>
-                <View style={styles.modalItemContainer}>
-                  <Text style={styles.toDoModalDetailsRow}>Date:</Text>
-                  <Text style={styles.toDoModalDetailsRow}>
-                    {showToDoModalState.date}
-                  </Text>
-                </View>
-                <View style={styles.modalItemContainer}>
-                  <Text style={styles.toDoModalDetailsRow}>Time:</Text>
-                  <Text style={styles.toDoModalDetailsRow}>
-                    {showToDoModalState.time}
-                  </Text>
-                </View>
-                <View style={styles.modalItemContainer}>
-                  <Text style={styles.toDoModalDetailsRow}>Location:</Text>
-                  <Text style={styles.toDoModalDetailsRow}>
-                    {showToDoModalState.location}
-                  </Text>
-                </View>
-                <View style={styles.modalItemContainer}>
-                  <Text style={styles.toDoModalDetailsRow}>Importance:</Text>
-                  <Text style={styles.toDoModalDetailsRow}>
-                    {showToDoModalState.importance}
-                  </Text>
-                </View>
-                <View style={styles.modalItemContainer}>
-                  <Text style={styles.toDoModalDetailsRow}>Finished:</Text>
-                  <Text style={styles.toDoModalDetailsRow}>
-                    {showToDoModalState.finished}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
+                {[
+                  'Name',
+                  'Type',
+                  'Date',
+                  'Time',
+                  'Location',
+                  'Importance',
+                  'Finished'
+                ].map(item => (
+                  <View style={styles.modalItemContainer}>
+                    <Text style={styles.toDoModalDetailsRow}>{item}:</Text>
+                    <TextInput
+                      placeholder={item}
+                      style={styles.toDoModalDetailsRow}
+                      value={showToDoModalState[item.toLowerCase()]}
+                      onChangeText={text =>
+                        this.setState({
+                          showToDoModalState: {
+                            ...this.state.showToDoModalState,
+                            [item.toLowerCase()]: text
+                          }
+                        })
+                      }
+                    />
+                  </View>
+                ))}
+                <TouchableOpacity
+                  onPress={this.onUpdate}
+                  style={{ backgroundColor: '#A269C5', padding: 10 }}
+                >
+                  <Text style={{ textAlign: 'center' }}>Update</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ backgroundColor: '#F59791', padding: 10 }}
+                  onPress={() => {
+                    [
+                      'Name',
+                      'Type',
+                      'Date',
+                      'Time',
+                      'Location',
+                      'Importance',
+                      'Finished'
+                    ].map(item => delete this[item.toLowerCase()]);
+                    this.setState({ showToDoModalState: { visible: false } });
+                  }}
+                >
+                  <Text style={{ textAlign: 'center' }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </Modal>
           </SafeAreaView>
         </ImageBackground>
@@ -415,7 +447,9 @@ export default class ToDoList extends React.Component {
                 style={styles.sortTouchable}
                 onPress={() => this.sortBy('importance')}
               >
-                <Text style={{ marginLeft: 2, marginRight: 5}}>Sort By Importance</Text>
+                <Text style={{ marginLeft: 2, marginRight: 5 }}>
+                  Sort By Importance
+                </Text>
                 <Icon name='caret-down' size={25} color='black' />
               </TouchableOpacity>
             </View>
