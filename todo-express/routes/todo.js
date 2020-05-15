@@ -32,13 +32,13 @@ router.post('/todos', async (req, res) => {
 
 //creaza endpointul de PUT
 //o sa-l folosesti in caz ca vrei sa faci update la un item To Do
-router.put('/todos', async (req, res) => {
+router.put('/todos/:id', async (req, res) => {
   if (!req.headers) return res.send({authenticated: false});
   let {authenticated, userId} = await authentication(req.headers);
   if (!authenticated) return res.send({authenticated: false});
   let {name, type, date, time, location, importance, finished} = req.body;
-  db.all('UPDATE todo SET name = ?, type = ?, date = ?, time = ?, location = ?, importance = ?, finished = ?;',
-    [name, type, date, time, location, importance, finished, userId],
+  db.all('UPDATE todo SET name = ?, type = ?, date = ?, time = ?, location = ?, importance = ?, finished = ? WHERE ROWID = ? AND id_user = ?;',
+    [name, type, date, time, location, importance, finished, req.params.id, userId],
     (e, r) => {
       if (e) return res.send({err: e.toString()});
       res.send(r);
