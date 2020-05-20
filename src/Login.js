@@ -1,26 +1,28 @@
 import React from 'react';
 import {
   Text,
+  Keyboard,
   TextInput,
   ScrollView,
   StyleSheet,
   SafeAreaView,
   ImageBackground,
-  TouchableOpacity,
+  TouchableOpacity
 } from 'react-native';
 
-import {Actions} from 'react-native-router-flux';
+import { Actions } from 'react-native-router-flux';
 
 import authService from './services/auth.service';
 
 export default class Login extends React.Component {
   state = {
     user: '',
-    password: '',
+    password: ''
   };
 
   login = async () => {
-    let {user, password} = this.state;
+    Keyboard.dismiss();
+    let { user, password } = this.state;
     let auth = await authService.login(user, password);
     if (auth.authenticated) {
       //salvam userul si parola in serviciul de autentificare ca sa le avem pt toate callurile din celalalte pagini
@@ -31,25 +33,29 @@ export default class Login extends React.Component {
   };
 
   render() {
-    let {user, password} = this.state;
+    let { user, password } = this.state;
     return (
       <ImageBackground
         source={require('../assets/images/login9.jpg')}
-        style={{width: '100%', height: '100%'}}>
-        <ScrollView style={styles.content}>
+        style={{ width: '100%', height: '100%' }}
+      >
+        <ScrollView
+          style={styles.content}
+          keyboardShouldPersistTaps={'handled'}
+        >
           <SafeAreaView>
             <Text style={styles.loginTitle}>Login</Text>
             <TextInput
               value={user}
               style={styles.inputField}
-              onChangeText={usr => this.setState({user: usr})}
+              onChangeText={usr => this.setState({ user: usr })}
               placeholder={'Username'}
             />
             <TextInput
               secureTextEntry={true}
               value={password}
               style={styles.inputField}
-              onChangeText={pass => this.setState({password: pass})}
+              onChangeText={pass => this.setState({ password: pass })}
               placeholder={'Password'}
             />
             <TouchableOpacity style={styles.loginButton} onPress={this.login}>
@@ -57,7 +63,8 @@ export default class Login extends React.Component {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.registerButton}
-              onPress={Actions.register}>
+              onPress={Actions.register}
+            >
               <Text style={styles.loginText}>Register</Text>
             </TouchableOpacity>
           </SafeAreaView>
@@ -70,7 +77,7 @@ export default class Login extends React.Component {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    flexDirection: 'column',
+    flexDirection: 'column'
   },
   loginTitle: {
     fontFamily: 'sans-serif-medium',
@@ -81,9 +88,9 @@ const styles = StyleSheet.create({
     color: 'black',
     textAlign: 'center',
     letterSpacing: 5,
-    textShadowOffset: {width: 4, height: 4},
+    textShadowOffset: { width: 4, height: 4 },
     textShadowRadius: 4,
-    textShadowColor: '#F5A9BC',
+    textShadowColor: '#F5A9BC'
   },
   loginButton: {
     height: 50,
@@ -95,7 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     paddingTop: 10,
-    marginBottom: 10,
+    marginBottom: 10
   },
   registerButton: {
     height: 50,
@@ -107,11 +114,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     paddingTop: 10,
-    marginBottom: 10,
+    marginBottom: 10
   },
   loginText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 20
   },
   inputField: {
     fontSize: 18,
@@ -122,6 +129,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: '#ffffff',
     borderRadius: 5,
-    marginBottom: 30,
-  },
+    marginBottom: 30
+  }
 });

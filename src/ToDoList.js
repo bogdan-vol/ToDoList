@@ -5,7 +5,6 @@ import {
   Text,
   Modal,
   Image,
-  ToolbarAndroid,
   Animated,
   TextInput,
   StatusBar,
@@ -13,9 +12,11 @@ import {
   StyleSheet,
   SafeAreaView,
   ImageBackground,
-  TouchableOpacity
+  TouchableOpacity,
+  PermissionsAndroid
 } from 'react-native';
 
+import MapView, { Marker } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -28,6 +29,7 @@ export default class ToDoList extends React.Component {
     todos: [],
     showDatePicker: false,
     showTimePicker: false,
+    map: { visible: false },
     addToDoModalState: { visible: false },
     showToDoModalState: { visible: false }
   };
@@ -56,12 +58,8 @@ export default class ToDoList extends React.Component {
   };
 
   deleteTodo = id => {
-    console.log(id);
-    console.log(this.state.todos.rowid);
-    console.log('before', this.state.todos); //log inainte sa stergi din todos
     this.setState(
       ({ todos }) => {
-        /* aici trebuie sa stergi din arrayul todos obiectul cu idul care iti vine in functie ca parametru */
         let index;
         for (var i = 0; i < todos.length; i++) {
           if (todos[i].rowid == id) {
@@ -71,7 +69,6 @@ export default class ToDoList extends React.Component {
         return todos.splice(index, 1);
       },
       () => {
-        console.log('after', this.state.todos); //log dupa ce ai sters din todos
         todoService.deleteTodo(id).then(() => {});
       }
     );
@@ -162,8 +159,31 @@ export default class ToDoList extends React.Component {
     todoService.updateTodo(rowid, this.state.showToDoModalState);
   };
 
+  showMap = () => {
+    this.toggleMenu(-1000);
+    this.setState({ map: { visible: true } });
+  };
+
+  onMapPress = ({
+    nativeEvent: {
+      coordinate: { latitude, longitude }
+    }
+  }) => {
+    let { addToDoModalState } = this.state;
+    if (addToDoModalState.visible) {
+      this.setState(
+        {
+          map: { visible: false },
+          addToDoModalState: { ...addToDoModalState, latitude, longitude }
+        },
+        () => delete this.mapCentered
+      );
+    }
+  };
+
   render() {
     let {
+      map,
       todos,
       showTimePicker,
       showDatePicker,
@@ -211,8 +231,8 @@ export default class ToDoList extends React.Component {
                 placeholder='Search'
                 style={{
                   fontSize: 20,
-                  marginLeft: 10,
                   paddingTop: 0,
+                  marginLeft: 10,
                   paddingBottom: 2
                 }}
               />
@@ -281,139 +301,6 @@ export default class ToDoList extends React.Component {
                 source={require('../assets/icons/add_icon2.png')}
               />
             </TouchableOpacity>
-            <Modal
-              transparent={true}
-              animationType={'slide'}
-              visible={addToDoModalState.visible}
-            >
-              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
-                {['Name', 'Type'].map(item => (
-                  <TextInput
-                    style={styles.addTodo}
-                    placeholder={item}
-                    value={addToDoModalState[item.toLowerCase()]}
-                    onChangeText={text =>
-                      this.setState({
-                        addToDoModalState: {
-                          ...addToDoModalState,
-                          [item.toLowerCase()]: text
-                        }
-                      })
-                    }
-                  />
-                ))}
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={async () => this.setState({ showDatePicker: true })}
-                >
-                  <TextInput
-                    editable={false}
-                    style={styles.addTodo}
-                    placeholder={'Date'}
-                    value={addToDoModalState.date}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={async () => this.setState({ showTimePicker: true })}
-                >
-                  <TextInput
-                    editable={false}
-                    style={styles.addTodo}
-                    placeholder={'Time'}
-                    value={addToDoModalState.time}
-                  />
-                </TouchableOpacity>
-                {['Location', 'Importance', 'Finished'].map(item => (
-                  <TextInput
-                    style={styles.addTodo}
-                    placeholder={item}
-                    value={addToDoModalState[item.toLowerCase()]}
-                    onChangeText={text =>
-                      this.setState({
-                        addToDoModalState: {
-                          ...addToDoModalState,
-                          [item.toLowerCase()]: text
-                        }
-                      })
-                    }
-                  />
-                ))}
-                <View style={{ flexDirection: 'row' }}>
-                  <TouchableOpacity
-                    onPress={this.addTodo}
-                    style={styles.addButton}
-                  >
-                    <Text style={styles.buttonText}>Add</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() =>
-                      this.setState({ addToDoModalState: { visible: false } })
-                    }
-                    style={styles.cancelButton}
-                  >
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Modal>
-            <Modal
-              transparent={true}
-              animationType={'slide'}
-              visible={showToDoModalState.visible}
-            >
-              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
-                {[
-                  'Name',
-                  'Type',
-                  'Date',
-                  'Time',
-                  'Location',
-                  'Importance',
-                  'Finished'
-                ].map(item => (
-                  <View style={styles.modalItemContainer}>
-                    <Text style={styles.toDoModalDetailsRow}>{item}:</Text>
-                    <TextInput
-                      placeholder={item}
-                      style={styles.toDoModalDetailsRow}
-                      value={showToDoModalState[item.toLowerCase()]}
-                      onChangeText={text =>
-                        this.setState({
-                          showToDoModalState: {
-                            ...this.state.showToDoModalState,
-                            [item.toLowerCase()]: text
-                          }
-                        })
-                      }
-                    />
-                  </View>
-                ))}
-                <TouchableOpacity
-                  onPress={this.onUpdate}
-                  style={{ backgroundColor: '#A269C5', padding: 10 }}
-                >
-                  <Text style={{ textAlign: 'center' }}>Update</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{ backgroundColor: '#F59791', padding: 10 }}
-                  onPress={() => {
-                    [
-                      'Name',
-                      'Type',
-                      'Date',
-                      'Time',
-                      'Location',
-                      'Importance',
-                      'Finished'
-                    ].map(item => delete this[item.toLowerCase()]);
-                    this.setState({ showToDoModalState: { visible: false } });
-                  }}
-                >
-                  <Text style={{ textAlign: 'center' }}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </Modal>
           </SafeAreaView>
         </ImageBackground>
         <Animated.View
@@ -452,6 +339,13 @@ export default class ToDoList extends React.Component {
                 </Text>
                 <Icon name='caret-down' size={25} color='black' />
               </TouchableOpacity>
+              <TouchableOpacity
+                onPress={this.showMap}
+                style={styles.sortTouchable}
+              >
+                <Text style={{ marginLeft: 2, marginRight: 5 }}>Map</Text>
+                <Icon name='map-marker' size={25} color='black' />
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
           {showDatePicker && (
@@ -475,6 +369,222 @@ export default class ToDoList extends React.Component {
             />
           )}
         </Animated.View>
+        <Modal transparent={true} visible={map.visible} animationType={'slide'}>
+          <MapView
+            style={{ flex: 1 }}
+            showsUserLocation={true}
+            ref={r => (this.map = r)}
+            onPress={this.onMapPress}
+            onPoiClick={this.onMapPress}
+            onMapReady={() => {
+              PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+              );
+            }}
+            onUserLocationChange={({
+              nativeEvent: {
+                coordinate: { latitude, longitude }
+              }
+            }) => {
+              if (!this.mapCentered) {
+                this.mapCentered = true;
+                this.map.animateToRegion({
+                  latitude,
+                  longitude,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421
+                });
+              }
+            }}
+          >
+            {todos.map(td => (
+              <Marker
+                title={td.name}
+                description={td.type}
+                coordinate={{
+                  latitude: parseFloat(td.latitude),
+                  longitude: parseFloat(td.longitude)
+                }}
+              />
+            ))}
+          </MapView>
+          <TouchableOpacity
+            style={{
+              top: 0,
+              right: 0,
+              width: 50,
+              height: 50,
+              padding: 10,
+              position: 'absolute'
+            }}
+            onPress={() =>
+              this.setState(
+                { map: { visible: false } },
+                () => delete this.mapCentered
+              )
+            }
+          >
+            <Icon name='times' size={30} color='black' />
+          </TouchableOpacity>
+        </Modal>
+        <Modal
+          transparent={true}
+          animationType={'slide'}
+          visible={addToDoModalState.visible}
+        >
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
+            {['Name', 'Type'].map(item => (
+              <TextInput
+                style={styles.addTodo}
+                placeholder={item}
+                value={addToDoModalState[item.toLowerCase()]}
+                onChangeText={text =>
+                  this.setState({
+                    addToDoModalState: {
+                      ...addToDoModalState,
+                      [item.toLowerCase()]: text
+                    }
+                  })
+                }
+              />
+            ))}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={async () => this.setState({ showDatePicker: true })}
+            >
+              <TextInput
+                editable={false}
+                style={styles.addTodo}
+                placeholder={'Date'}
+                value={addToDoModalState.date}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={async () => this.setState({ showTimePicker: true })}
+            >
+              <TextInput
+                editable={false}
+                style={styles.addTodo}
+                placeholder={'Time'}
+                value={addToDoModalState.time}
+              />
+            </TouchableOpacity>
+            <View
+              style={{
+                ...styles.addTodo,
+                flexDirection: 'row',
+                alignItems: 'center'
+              }}
+            >
+              <TextInput
+                style={{ flex: 1 }}
+                placeholder={'Location'}
+                value={addToDoModalState.location}
+                onChangeText={text =>
+                  this.setState({
+                    addToDoModalState: {
+                      ...addToDoModalState,
+                      location: text
+                    }
+                  })
+                }
+              />
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={this.showMap}
+                style={{ paddingHorizontal: 20 }}
+              >
+                <Icon name='map-marker' size={25} color='black' />
+              </TouchableOpacity>
+            </View>
+            {['Importance', 'Finished'].map(item => (
+              <TextInput
+                style={styles.addTodo}
+                placeholder={item}
+                value={addToDoModalState[item.toLowerCase()]}
+                onChangeText={text =>
+                  this.setState({
+                    addToDoModalState: {
+                      ...addToDoModalState,
+                      [item.toLowerCase()]: text
+                    }
+                  })
+                }
+              />
+            ))}
+            <View style={{ flexDirection: 'row' }}>
+              <TouchableOpacity onPress={this.addTodo} style={styles.addButton}>
+                <Text style={styles.buttonText}>Add</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  this.setState({ addToDoModalState: { visible: false } })
+                }
+                style={styles.cancelButton}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        <Modal
+          transparent={true}
+          animationType={'slide'}
+          visible={showToDoModalState.visible}
+        >
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
+            {[
+              'Name',
+              'Type',
+              'Date',
+              'Time',
+              'Location',
+              'Importance',
+              'Finished'
+            ].map(item => (
+              <View style={styles.modalItemContainer}>
+                <Text style={styles.toDoModalDetailsRow}>{item}:</Text>
+                <TextInput
+                  placeholder={item}
+                  style={styles.toDoModalDetailsRow}
+                  value={showToDoModalState[item.toLowerCase()]}
+                  onChangeText={text =>
+                    this.setState({
+                      showToDoModalState: {
+                        ...this.state.showToDoModalState,
+                        [item.toLowerCase()]: text
+                      }
+                    })
+                  }
+                />
+              </View>
+            ))}
+            <TouchableOpacity
+              onPress={this.onUpdate}
+              style={{ backgroundColor: '#A269C5', padding: 10 }}
+            >
+              <Text style={{ textAlign: 'center' }}>Update</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ backgroundColor: '#F59791', padding: 10 }}
+              onPress={() => {
+                [
+                  'Name',
+                  'Type',
+                  'Date',
+                  'Time',
+                  'Location',
+                  'Importance',
+                  'Finished'
+                ].map(item => delete this[item.toLowerCase()]);
+                this.setState({ showToDoModalState: { visible: false } });
+              }}
+            >
+              <Text style={{ textAlign: 'center' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </>
     );
   }
