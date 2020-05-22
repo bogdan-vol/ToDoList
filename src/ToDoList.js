@@ -136,8 +136,9 @@ export default class ToDoList extends React.Component {
       time,
       rowid,
       location,
-      finished,
-      importance
+      importance,
+      details,
+      finished
     } = this.state.showToDoModalState;
     this.setState(({ todos }) => ({
       showToDoModalState: { visible: false },
@@ -150,8 +151,9 @@ export default class ToDoList extends React.Component {
               date,
               time,
               location,
-              finished,
-              importance
+              importance,
+              details,
+              finished
             }
           : td
       )
@@ -498,7 +500,7 @@ export default class ToDoList extends React.Component {
                 <Icon name='map-marker' size={25} color='black' />
               </TouchableOpacity>
             </View>
-            {['Importance', 'Finished'].map(item => (
+            {['Importance', 'Details'].map(item => (
               <TextInput
                 style={styles.addTodo}
                 placeholder={item}
@@ -541,7 +543,8 @@ export default class ToDoList extends React.Component {
               'Time',
               'Location',
               'Importance',
-              'Finished'
+              'Details',
+              // 'Finished'
             ].map(item => (
               <View style={styles.modalItemContainer}>
                 <Text style={styles.toDoModalDetailsRow}>{item}:</Text>
@@ -576,6 +579,7 @@ export default class ToDoList extends React.Component {
                   'Time',
                   'Location',
                   'Importance',
+                  'Details',
                   'Finished'
                 ].map(item => delete this[item.toLowerCase()]);
                 this.setState({ showToDoModalState: { visible: false } });
@@ -680,27 +684,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderWidth: 0.5,
     borderRadius: 10,
-    paddingLeft: 10,
-    paddingRight: 10
-  },
-  importanceHigh: {
-    backgroundColor: '#F59791',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingLeft: 10,
-    paddingRight: 10
-  },
-  importanceMedium: {
-    backgroundColor: '#F3F75F',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingLeft: 10,
-    paddingRight: 10
-  },
-  importanceLow: {
-    backgroundColor: '#95EE90',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingLeft: 10,
     paddingRight: 10
   },

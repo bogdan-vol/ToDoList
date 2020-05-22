@@ -26,24 +26,25 @@ router.post('/todos', async (req, res) => {
     date,
     time,
     location,
-    importance,
-    finished,
     latitude,
-    longitude
+    longitude,
+    importance,
+    details,
+    finished
   } = req.body;
   db.all(
-    'INSERT INTO todo VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+    'INSERT INTO todo VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
     [
       name,
       type,
       date,
       time,
       location,
-      importance,
-      finished,
-      userId,
       latitude,
-      longitude
+      longitude,
+      importance,
+      details,
+      finished
     ],
     (e, r) => {
       if (e) return res.send({ err: e.toString() });
@@ -64,23 +65,25 @@ router.put('/todos/:id', async (req, res) => {
     date,
     time,
     location,
-    importance,
-    finished,
     latitude,
-    longitude
+    longitude,
+    importance,
+    details,
+    finished
   } = req.body;
   db.all(
-    'UPDATE todo SET name = ?, type = ?, date = ?, time = ?, location = ?, importance = ?, finished = ?, latitude = ?, longitude = ? WHERE ROWID = ? AND id_user = ?;',
+    'UPDATE todo SET name = ?, type = ?, date = ?, time = ?, location = ?, latitude = ?, longitude = ?, importance = ?, details = ?, finished = ?  WHERE ROWID = ? AND id_user = ?;',
     [
       name,
       type,
       date,
       time,
       location,
-      importance,
-      finished,
       latitude,
       longitude,
+      importance,
+      details,
+      finished,
       req.params.id,
       userId
     ],
