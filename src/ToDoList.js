@@ -325,11 +325,15 @@ export default class ToDoList extends React.Component {
                 backgroundColor: 'white'
               }}
             >
+              <Image
+              style={{ width: 70, height: 80, marginTop: 10, marginLeft: 50 }}
+              source={require('../assets/icons/todo_logo_menu.png')}
+              />
               <TouchableOpacity
                 style={styles.sortTouchable}
                 onPress={() => this.sortBy('date')}
               >
-                <Text style={{ marginLeft: 2 }}>Sort By Date</Text>
+                <Text style={{ marginLeft: 2, marginTop: 20 }}>Sort By Date</Text>
                 <Icon name='caret-down' size={25} color='black' />
               </TouchableOpacity>
               <TouchableOpacity
@@ -347,6 +351,9 @@ export default class ToDoList extends React.Component {
               >
                 <Text style={{ marginLeft: 2, marginRight: 5 }}>Map</Text>
                 <Icon name='map-marker' size={25} color='black' />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.logOutButton} onPress={this.logOut}>
+                <Text style={styles.logOutText}>Log out</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -716,5 +723,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
-  }
+  },
+  logOutButton: {
+    height: 30,
+    marginRight: 50,
+    marginLeft: 50,
+    backgroundColor: '#D077CB',
+    borderWidth: 0.5,
+    borderColor: '#D077CB',
+    borderRadius: 5,
+    alignItems: 'center',
+    paddingTop: 5,
+    paddingLeft : 2,
+    marginBottom: 10,
+    marginTop: 290
+  },
+  logOutText: {
+    color: '#fff',
+    fontSize: 15
+  },
 });

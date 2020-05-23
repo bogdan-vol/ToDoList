@@ -44,7 +44,8 @@ router.post('/todos', async (req, res) => {
       longitude,
       importance,
       details,
-      finished
+      finished,
+      userId
     ],
     (e, r) => {
       if (e) return res.send({ err: e.toString() });
