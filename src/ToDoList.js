@@ -5,6 +5,7 @@ import {
   Text,
   Modal,
   Image,
+  Picker,
   Animated,
   TextInput,
   StatusBar,
@@ -16,6 +17,7 @@ import {
   PermissionsAndroid
 } from 'react-native';
 
+import { CheckBox } from 'react-native-elements';
 import MapView, { Marker } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -93,10 +95,14 @@ export default class ToDoList extends React.Component {
   onDateChange = date => {
     if (date.type === 'dismissed')
       return this.setState({ showDatePicker: false });
-    this.setState(({ addToDoModalState }) => ({
+    this.setState(({ addToDoModalState, showToDoModalState }) => ({
       showDatePicker: false,
       addToDoModalState: {
         ...addToDoModalState,
+        date: this.formatDate(date.nativeEvent.timestamp)
+      },
+      showToDoModalState: {
+        ...showToDoModalState,
         date: this.formatDate(date.nativeEvent.timestamp)
       }
     }));
@@ -105,10 +111,14 @@ export default class ToDoList extends React.Component {
   onTimeChange = time => {
     if (time.type === 'dismissed')
       return this.setState({ showTimePicker: false });
-    this.setState(({ addToDoModalState }) => ({
+    this.setState(({ addToDoModalState, showToDoModalState }) => ({
       showTimePicker: false,
       addToDoModalState: {
         ...addToDoModalState,
+        time: this.formatTime(time.nativeEvent.timestamp)
+      },
+      showToDoModalState: {
+        ...showToDoModalState,
         time: this.formatTime(time.nativeEvent.timestamp)
       }
     }));
@@ -136,6 +146,8 @@ export default class ToDoList extends React.Component {
       time,
       rowid,
       location,
+      latitude,
+      longitude,
       importance,
       details,
       finished
@@ -152,6 +164,8 @@ export default class ToDoList extends React.Component {
               time,
               location,
               importance,
+              latitude,
+              longitude,
               details,
               finished
             }
@@ -171,7 +185,7 @@ export default class ToDoList extends React.Component {
       coordinate: { latitude, longitude }
     }
   }) => {
-    let { addToDoModalState } = this.state;
+    let { addToDoModalState, showToDoModalState } = this.state;
     if (addToDoModalState.visible) {
       this.setState(
         {
@@ -181,6 +195,31 @@ export default class ToDoList extends React.Component {
         () => delete this.mapCentered
       );
     }
+    if (showToDoModalState.visible) {
+      this.setState(
+        {
+          map: { visible: false },
+          showToDoModalState: { ...showToDoModalState, latitude, longitude }
+        },
+        () => delete this.mapCentered
+      );
+    }
+  };
+
+  toggleFinished = todo => {
+    this.setState(
+      ({ todos }) => ({
+        todos: todos.map(td => ({
+          ...td,
+          finished: todo.rowid === td.rowid ? !td.finished : td.finished
+        }))
+      }),
+      () =>
+        todoService.updateTodo(
+          todo.rowid,
+          this.state.todos.filter(td => td.rowid === todo.rowid)[0]
+        )
+    );
   };
 
   render() {
@@ -271,6 +310,12 @@ export default class ToDoList extends React.Component {
                     marginTop: 10
                   }}
                 >
+                  <CheckBox
+                    center
+                    checked={td.finished}
+                    uncheckedColor={'white'}
+                    onPress={() => this.toggleFinished(td)}
+                  />
                   <Text style={styles.todoName}>{td.name}</Text>
                   <Text style={styles.todo}>{td.time}</Text>
                   <TouchableOpacity
@@ -326,14 +371,16 @@ export default class ToDoList extends React.Component {
               }}
             >
               <Image
-              style={{ width: 70, height: 80, marginTop: 10, marginLeft: 50 }}
-              source={require('../assets/icons/todo_logo_menu.png')}
+                style={{ width: 70, height: 80, marginTop: 10, marginLeft: 50 }}
+                source={require('../assets/icons/todo_logo_menu.png')}
               />
               <TouchableOpacity
                 style={styles.sortTouchable}
                 onPress={() => this.sortBy('date')}
               >
-                <Text style={{ marginLeft: 2, marginTop: 20 }}>Sort By Date</Text>
+                <Text style={{ marginLeft: 2, marginTop: 20 }}>
+                  Sort By Date
+                </Text>
                 <Icon name='caret-down' size={25} color='black' />
               </TouchableOpacity>
               <TouchableOpacity
@@ -352,7 +399,10 @@ export default class ToDoList extends React.Component {
                 <Text style={{ marginLeft: 2, marginRight: 5 }}>Map</Text>
                 <Icon name='map-marker' size={25} color='black' />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.logOutButton} onPress={this.logOut}>
+              <TouchableOpacity
+                style={styles.logOutButton}
+                onPress={this.logOut}
+              >
                 <Text style={styles.logOutText}>Log out</Text>
               </TouchableOpacity>
             </View>
@@ -442,21 +492,43 @@ export default class ToDoList extends React.Component {
           visible={addToDoModalState.visible}
         >
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
-            {['Name', 'Type'].map(item => (
-              <TextInput
-                style={styles.addTodo}
-                placeholder={item}
-                value={addToDoModalState[item.toLowerCase()]}
-                onChangeText={text =>
+            <TextInput
+              style={styles.addTodo}
+              placeholder={'Name'}
+              value={addToDoModalState.name}
+              onChangeText={text =>
+                this.setState({
+                  addToDoModalState: {
+                    ...addToDoModalState,
+                    name: text
+                  }
+                })
+              }
+            />
+            <View
+              style={{
+                ...styles.addTodo,
+                alignItems: 'center',
+                flexDirection: 'row'
+              }}
+            >
+              <Picker
+                style={{ flex: 1 }}
+                selectedValue={addToDoModalState.type}
+                onValueChange={itemValue =>
                   this.setState({
                     addToDoModalState: {
                       ...addToDoModalState,
-                      [item.toLowerCase()]: text
+                      type: itemValue
                     }
                   })
                 }
-              />
-            ))}
+              >
+                <Picker.Item label='Business' value='business' />
+                <Picker.Item label='Casual' value='casual' />
+                <Picker.Item label='Date' value='date' />
+              </Picker>
+            </View>
             <TouchableOpacity
               activeOpacity={1}
               onPress={async () => this.setState({ showDatePicker: true })}
@@ -507,21 +579,42 @@ export default class ToDoList extends React.Component {
                 <Icon name='map-marker' size={25} color='black' />
               </TouchableOpacity>
             </View>
-            {['Importance', 'Details'].map(item => (
-              <TextInput
-                style={styles.addTodo}
-                placeholder={item}
-                value={addToDoModalState[item.toLowerCase()]}
-                onChangeText={text =>
+            <View
+              style={{
+                ...styles.addTodo,
+                alignItems: 'center',
+                flexDirection: 'row'
+              }}
+            >
+              <Picker
+                style={{ flex: 1 }}
+                selectedValue={addToDoModalState.importance}
+                onValueChange={itemValue =>
                   this.setState({
                     addToDoModalState: {
                       ...addToDoModalState,
-                      [item.toLowerCase()]: text
+                      importance: itemValue
                     }
                   })
                 }
-              />
-            ))}
+              >
+                <Picker.Item label='Very important' value='very' />
+                <Picker.Item label='Less important' value='less' />
+              </Picker>
+            </View>
+            <TextInput
+              style={styles.addTodo}
+              placeholder={'Details'}
+              value={addToDoModalState.details}
+              onChangeText={text =>
+                this.setState({
+                  addToDoModalState: {
+                    ...addToDoModalState,
+                    details: text
+                  }
+                })
+              }
+            />
             <View style={{ flexDirection: 'row' }}>
               <TouchableOpacity onPress={this.addTodo} style={styles.addButton}>
                 <Text style={styles.buttonText}>Add</Text>
@@ -543,33 +636,126 @@ export default class ToDoList extends React.Component {
           visible={showToDoModalState.visible}
         >
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.5)' }}>
-            {[
-              'Name',
-              'Type',
-              'Date',
-              'Time',
-              'Location',
-              'Importance',
-              'Details',
-              // 'Finished'
-            ].map(item => (
-              <View style={styles.modalItemContainer}>
-                <Text style={styles.toDoModalDetailsRow}>{item}:</Text>
+            <View style={styles.modalItemContainer}>
+              <Text style={styles.toDoModalDetailsRow}>Name:</Text>
+              <TextInput
+                placeholder={'Name'}
+                style={{ ...styles.toDoModalDetailsRow, textAlign: 'right' }}
+                value={showToDoModalState.name}
+                onChangeText={text =>
+                  this.setState({
+                    showToDoModalState: {
+                      ...showToDoModalState,
+                      name: text
+                    }
+                  })
+                }
+              />
+            </View>
+            <View style={styles.modalItemContainer}>
+              <Text style={styles.toDoModalDetailsRow}>Type:</Text>
+              <Picker
+                style={{ flex: 1 }}
+                selectedValue={showToDoModalState.type}
+                onValueChange={itemValue =>
+                  this.setState({
+                    showToDoModalState: {
+                      ...showToDoModalState,
+                      type: itemValue
+                    }
+                  })
+                }
+              >
+                <Picker.Item label='Business' value='business' />
+                <Picker.Item label='Casual' value='casual' />
+                <Picker.Item label='Date' value='date' />
+              </Picker>
+            </View>
+            <View style={styles.modalItemContainer}>
+              <Text style={styles.toDoModalDetailsRow}>Date:</Text>
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={async () => this.setState({ showDatePicker: true })}
+              >
                 <TextInput
-                  placeholder={item}
-                  style={styles.toDoModalDetailsRow}
-                  value={showToDoModalState[item.toLowerCase()]}
-                  onChangeText={text =>
-                    this.setState({
-                      showToDoModalState: {
-                        ...this.state.showToDoModalState,
-                        [item.toLowerCase()]: text
-                      }
-                    })
-                  }
+                  editable={false}
+                  placeholder={'Date'}
+                  value={showToDoModalState.date}
+                  style={{ ...styles.addTodo, borderWidth: 0 }}
                 />
-              </View>
-            ))}
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalItemContainer}>
+              <Text style={styles.toDoModalDetailsRow}>Time:</Text>
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={async () => this.setState({ showTimePicker: true })}
+              >
+                <TextInput
+                  editable={false}
+                  style={{ ...styles.addTodo, borderWidth: 0 }}
+                  placeholder={'Time'}
+                  value={showToDoModalState.time}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalItemContainer}>
+              <Text style={styles.toDoModalDetailsRow}>Location:</Text>
+              <TextInput
+                style={{ ...styles.toDoModalDetailsRow, textAlign: 'right' }}
+                placeholder={'Location'}
+                value={showToDoModalState.location}
+                onChangeText={text =>
+                  this.setState({
+                    showToDoModalState: {
+                      ...showToDoModalState,
+                      location: text
+                    }
+                  })
+                }
+              />
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={this.showMap}
+                style={{ paddingHorizontal: 20 }}
+              >
+                <Icon name='map-marker' size={25} color='black' />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalItemContainer}>
+              <Text style={styles.toDoModalDetailsRow}>Importance:</Text>
+              <Picker
+                style={{ flex: 1 }}
+                selectedValue={showToDoModalState.importance}
+                onValueChange={itemValue =>
+                  this.setState({
+                    showToDoModalState: {
+                      ...showToDoModalState,
+                      importance: itemValue
+                    }
+                  })
+                }
+              >
+                <Picker.Item label='Very important' value='very' />
+                <Picker.Item label='Less important' value='less' />
+              </Picker>
+            </View>
+            <View style={styles.modalItemContainer}>
+              <Text style={styles.toDoModalDetailsRow}>Details:</Text>
+              <TextInput
+                placeholder={'Name'}
+                style={{ ...styles.toDoModalDetailsRow, textAlign: 'right' }}
+                value={showToDoModalState.details}
+                onChangeText={text =>
+                  this.setState({
+                    showToDoModalState: {
+                      ...this.state.showToDoModalState,
+                      details: text
+                    }
+                  })
+                }
+              />
+            </View>
             <TouchableOpacity
               onPress={this.onUpdate}
               style={{ backgroundColor: '#A269C5', padding: 10 }}
@@ -603,9 +789,9 @@ export default class ToDoList extends React.Component {
 const styles = StyleSheet.create({
   modalItemContainer: {
     padding: 10,
+    alignItems: 'center',
     flexDirection: 'row',
-    backgroundColor: 'white',
-    justifyContent: 'space-between'
+    backgroundColor: 'white'
   },
   addContainer: {
     right: 10,
@@ -639,19 +825,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   todoName: {
+    flex: 1,
     fontSize: 15,
     paddingTop: 10,
-    paddingBottom: 10,
     paddingLeft: 5,
     color: '#FFFFFF',
+    paddingBottom: 10,
     fontWeight: 'bold'
   },
   todo: {
+    flex: 1,
     fontSize: 15,
     paddingTop: 10,
-    paddingBottom: 10,
     paddingLeft: 5,
-    color: '#FFFFFF'
+    color: '#FFFFFF',
+    paddingBottom: 10
   },
   details: {
     height: 30,
@@ -711,6 +899,7 @@ const styles = StyleSheet.create({
     padding: 10
   },
   toDoModalDetailsRow: {
+    flex: 1,
     fontSize: 15,
     paddingTop: 10,
     paddingBottom: 10,
@@ -734,12 +923,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     paddingTop: 5,
-    paddingLeft : 2,
+    paddingLeft: 2,
     marginBottom: 10,
     marginTop: 290
   },
   logOutText: {
     color: '#fff',
     fontSize: 15
-  },
+  }
 });
