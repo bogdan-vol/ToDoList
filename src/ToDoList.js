@@ -29,6 +29,7 @@ export default class ToDoList extends React.Component {
 
   state = {
     todos: [],
+    search: '',
     showDatePicker: false,
     showTimePicker: false,
     map: { visible: false },
@@ -226,6 +227,7 @@ export default class ToDoList extends React.Component {
     let {
       map,
       todos,
+      search,
       showTimePicker,
       showDatePicker,
       addToDoModalState,
@@ -253,7 +255,6 @@ export default class ToDoList extends React.Component {
               <Icon name='bars' size={25} color='white' />
             </TouchableOpacity>
             <View
-              animationType={'slide'}
               style={{
                 height: 30,
                 width: 250,
@@ -270,7 +271,9 @@ export default class ToDoList extends React.Component {
               </View>
               <TextInput
                 placeholder='Search'
+                onChangeText={text => this.setState({ search: text })}
                 style={{
+                  flex: 1,
                   fontSize: 20,
                   paddingTop: 0,
                   marginLeft: 10,
@@ -288,48 +291,51 @@ export default class ToDoList extends React.Component {
               style={{ flexDirection: 'row', justifyContent: 'space-between' }}
             />
             <ScrollView style={styles.content}>
-              {todos.map(td => (
-                <TouchableOpacity
-                  key={td.rowid}
-                  onPress={() => this.onTodoPress(td)}
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    // justifyContent: 'center',
-                    justifyContent: 'space-between',
-                    // justifyContent: 'space-around',
-                    backgroundColor:
-                      td.importance === 'high'
-                        ? '#A81996'
-                        : td.importance === 'medium'
-                        ? '#D077CB'
-                        : '#F5AEF1',
-                    borderTopLeftRadius: 20,
-                    borderBottomLeftRadius: 20,
-                    marginTop: 10
-                  }}
-                >
-                  <CheckBox
-                    center
-                    checked={td.finished}
-                    uncheckedColor={'white'}
-                    onPress={() => this.toggleFinished(td)}
-                  />
-                  <Text style={styles.todoName}>{td.name}</Text>
-                  <Text style={styles.todo}>{td.time}</Text>
-                  <TouchableOpacity
-                    onPress={() => this.deleteTodo(td.rowid)}
-                    style={{
-                      padding: 10,
-                      alignContent: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Icon name='trash-o' size={25} color='white' />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              ))}
+              {todos.map(
+                td =>
+                  td.name.indexOf(search) >= 0 && (
+                    <TouchableOpacity
+                      key={td.rowid}
+                      onPress={() => this.onTodoPress(td)}
+                      style={{
+                        flex: 1,
+                        alignItems: 'center',
+                        flexDirection: 'row',
+                        // justifyContent: 'center',
+                        justifyContent: 'space-between',
+                        // justifyContent: 'space-around',
+                        backgroundColor:
+                          td.importance === 'high'
+                            ? '#A81996'
+                            : td.importance === 'medium'
+                            ? '#D077CB'
+                            : '#F5AEF1',
+                        borderTopLeftRadius: 20,
+                        borderBottomLeftRadius: 20,
+                        marginTop: 10
+                      }}
+                    >
+                      <CheckBox
+                        center
+                        checked={td.finished}
+                        uncheckedColor={'white'}
+                        onPress={() => this.toggleFinished(td)}
+                      />
+                      <Text style={styles.todoName}>{td.name}</Text>
+                      <Text style={styles.todo}>{td.time}</Text>
+                      <TouchableOpacity
+                        onPress={() => this.deleteTodo(td.rowid)}
+                        style={{
+                          padding: 10,
+                          alignContent: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Icon name='trash-o' size={25} color='white' />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  )
+              )}
               <View style={{ height: 60 }} />
             </ScrollView>
             <TouchableOpacity
