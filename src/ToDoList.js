@@ -274,7 +274,7 @@ export default class ToDoList extends React.Component {
                 onChangeText={text => this.setState({ search: text })}
                 style={{
                   flex: 1,
-                  fontSize: 20,
+                  fontSize: 17,
                   paddingTop: 0,
                   marginLeft: 10,
                   paddingBottom: 2
@@ -301,9 +301,7 @@ export default class ToDoList extends React.Component {
                         flex: 1,
                         alignItems: 'center',
                         flexDirection: 'row',
-                        // justifyContent: 'center',
                         justifyContent: 'space-between',
-                        // justifyContent: 'space-around',
                         backgroundColor:
                           td.importance === 'high'
                             ? '#A81996'
@@ -318,6 +316,7 @@ export default class ToDoList extends React.Component {
                       <CheckBox
                         center
                         checked={td.finished}
+                        checkedColor='#9747CF'
                         uncheckedColor={'white'}
                         onPress={() => this.toggleFinished(td)}
                       />
@@ -465,7 +464,7 @@ export default class ToDoList extends React.Component {
             {todos.map(td => (
               <Marker
                 title={td.name}
-                description={td.type}
+                description={td.date}
                 coordinate={{
                   latitude: parseFloat(td.latitude),
                   longitude: parseFloat(td.longitude)
@@ -709,7 +708,7 @@ export default class ToDoList extends React.Component {
               <Text style={styles.toDoModalDetailsRow}>Location:</Text>
               <TextInput
                 style={{ ...styles.toDoModalDetailsRow, textAlign: 'right' }}
-                placeholder={'Location'}
+                // placeholder={'Location'}
                 value={showToDoModalState.location}
                 onChangeText={text =>
                   this.setState({
@@ -749,7 +748,7 @@ export default class ToDoList extends React.Component {
             <View style={styles.modalItemContainer}>
               <Text style={styles.toDoModalDetailsRow}>Details:</Text>
               <TextInput
-                placeholder={'Name'}
+                placeholder={'Details'}
                 style={{ ...styles.toDoModalDetailsRow, textAlign: 'right' }}
                 value={showToDoModalState.details}
                 onChangeText={text =>
