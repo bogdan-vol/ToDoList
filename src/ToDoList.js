@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 
 import { CheckBox } from 'react-native-elements';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -30,6 +30,7 @@ export default class ToDoList extends React.Component {
   state = {
     todos: [],
     search: '',
+    selectedMarkers: [],
     showDatePicker: false,
     showTimePicker: false,
     map: { visible: false },
@@ -223,6 +224,20 @@ export default class ToDoList extends React.Component {
     );
   };
 
+  selectMarker = toDo => {
+    this.setState(({ selectedMarkers }) => {
+      if (selectedMarkers.length < 2)
+        return { selectedMarkers: [...selectedMarkers, toDo] };
+    });
+  };
+
+  distanceBetweenTwoMarkers = (m1, m2) => {
+    return Math.sqrt(
+      Math.pow(Math.abs(m1.latitude - m2.latitude), 2) +
+        Math.pow(Math.abs(m1.longitude - m2.longitude), 2)
+    );
+  };
+
   render() {
     let {
       map,
@@ -230,10 +245,10 @@ export default class ToDoList extends React.Component {
       search,
       showTimePicker,
       showDatePicker,
+      selectedMarkers,
       addToDoModalState,
       showToDoModalState
     } = this.state;
-
     return (
       <>
         <ImageBackground
@@ -465,12 +480,145 @@ export default class ToDoList extends React.Component {
               <Marker
                 title={td.name}
                 description={td.date}
+                onPress={() => this.selectMarker(td)}
                 coordinate={{
-                  latitude: parseFloat(td.latitude),
-                  longitude: parseFloat(td.longitude)
+                  latitude: td.latitude,
+                  longitude: td.longitude
                 }}
               />
             ))}
+            {selectedMarkers.length === 2 && (
+              <>
+                <Polyline
+                  coordinates={[
+                    {
+                      latitude: selectedMarkers[0].latitude,
+                      longitude: selectedMarkers[0].longitude
+                    },
+                    {
+                      latitude:
+                        selectedMarkers[0].latitude -
+                        (this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) *
+                          Math.sqrt(3)) /
+                          4,
+                      longitude:
+                        selectedMarkers[0].longitude +
+                        this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) /
+                          4
+                    }
+                  ]}
+                  strokeColor='#000'
+                  strokeWidth={6}
+                />
+                <Polyline
+                  coordinates={[
+                    {
+                      latitude: selectedMarkers[0].latitude,
+                      longitude: selectedMarkers[0].longitude
+                    },
+                    {
+                      latitude:
+                        selectedMarkers[0].latitude -
+                        (this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) *
+                          Math.sqrt(3)) /
+                          4,
+                      longitude:
+                        selectedMarkers[0].longitude -
+                        this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) /
+                          4
+                    }
+                  ]}
+                  strokeColor='#000'
+                  strokeWidth={6}
+                />
+                <Polyline
+                  coordinates={[
+                    {
+                      latitude:
+                        selectedMarkers[0].latitude -
+                        (this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) *
+                          Math.sqrt(3)) /
+                          4,
+                      longitude:
+                        selectedMarkers[0].longitude +
+                        this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) /
+                          4
+                    },
+                    {
+                      latitude:
+                        selectedMarkers[0].latitude -
+                        (this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) *
+                          Math.sqrt(3)) /
+                          4,
+                      longitude:
+                        selectedMarkers[0].longitude -
+                        this.distanceBetweenTwoMarkers(
+                          selectedMarkers[0],
+                          selectedMarkers[1]
+                        ) /
+                          4
+                    }
+                  ]}
+                  strokeColor='#000'
+                  strokeWidth={6}
+                />
+                <Polyline
+                  coordinates={[
+                    {
+                      latitude: selectedMarkers[0].latitude,
+                      longitude: selectedMarkers[0].longitude
+                    },
+                    {
+                      latitude: selectedMarkers[1].latitude,
+                      longitude: selectedMarkers[1].longitude
+                    }
+                  ]}
+                  strokeColor='#000' // fallback for when `strokeColors` is not supported by the map-provider
+                  strokeColors={[
+                    '#7F0000',
+                    '#00000000', // no color, creates a "long" gradient between the previous and next coordinate
+                    '#B24112',
+                    '#E5845C',
+                    '#238C23',
+                    '#7F0000'
+                  ]}
+                  strokeWidth={6}
+                />
+                <Marker
+                  coordinate={{
+                    latitude:
+                      (selectedMarkers[0].latitude +
+                        selectedMarkers[1].latitude) /
+                      2,
+                    longitude:
+                      (selectedMarkers[0].longitude +
+                        selectedMarkers[1].longitude) /
+                      2
+                  }}
+                />
+              </>
+            )}
           </MapView>
           <TouchableOpacity
             style={{
