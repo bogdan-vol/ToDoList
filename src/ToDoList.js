@@ -489,7 +489,7 @@ export default class ToDoList extends React.Component {
             ))}
             {selectedMarkers.length === 2 && (
               <>
-                <Polyline
+                <Polyline //una din liniile care porneste din primul punch selectat
                   coordinates={[
                     {
                       latitude: selectedMarkers[0].latitude,
@@ -516,7 +516,7 @@ export default class ToDoList extends React.Component {
                   strokeColor='#000'
                   strokeWidth={6}
                 />
-                <Polyline
+                <Polyline //alta linie care porneste din primul punch selectat
                   coordinates={[
                     {
                       latitude: selectedMarkers[0].latitude,
@@ -543,7 +543,7 @@ export default class ToDoList extends React.Component {
                   strokeColor='#000'
                   strokeWidth={6}
                 />
-                <Polyline
+                <Polyline // linia care uneste extremitatile celor 2 linii care pornesc din acelasi punct
                   coordinates={[
                     {
                       latitude:
@@ -583,7 +583,7 @@ export default class ToDoList extends React.Component {
                   strokeColor='#000'
                   strokeWidth={6}
                 />
-                <Polyline
+                <Polyline // linia care uneste punctele selectate
                   coordinates={[
                     {
                       latitude: selectedMarkers[0].latitude,
@@ -605,7 +605,7 @@ export default class ToDoList extends React.Component {
                   ]}
                   strokeWidth={6}
                 />
-                <Marker
+                <Marker // mijlocul distantei dintre cele 2 puncte selectate
                   coordinate={{
                     latitude:
                       (selectedMarkers[0].latitude +
