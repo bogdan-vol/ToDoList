@@ -18,12 +18,14 @@ import {
 } from 'react-native';
 
 import { CheckBox } from 'react-native-elements';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, Polygon, Circle } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import todoService from './services/todo.service';
 
+const ang90 = (90 * Math.PI) / 180;
+const ang60 = (60 * Math.PI) / 180;
 export default class ToDoList extends React.Component {
   translateMenuX = new Animated.Value(-1000);
 
@@ -231,11 +233,51 @@ export default class ToDoList extends React.Component {
     });
   };
 
-  distanceBetweenTwoMarkers = (m1, m2) => {
+  distance = () => {
+    let m1 = this.state.selectedMarkers[0],
+      m2 = this.state.selectedMarkers[1];
     return Math.sqrt(
       Math.pow(Math.abs(m1.latitude - m2.latitude), 2) +
         Math.pow(Math.abs(m1.longitude - m2.longitude), 2)
     );
+  };
+
+  halfDist = () => {
+    return this.distance() / 2;
+  };
+
+  halfMarker = () => {
+    let { selectedMarkers } = this.state;
+    return {
+      latitude: (selectedMarkers[0].latitude + selectedMarkers[1].latitude) / 2,
+      longitude:
+        (selectedMarkers[0].longitude + selectedMarkers[1].longitude) / 2
+    };
+  };
+
+  draw_triangle = () => {
+    let y = this.halfMarker().latitude;
+    let x = this.halfMarker().longitude;
+    let radius = this.halfDist();
+    var x_offset = radius * Math.cos(Math.PI / 6);
+    var y_offset = radius * Math.sin(Math.PI / 6);
+    var x1 = x;
+    var y1 = y - radius;
+    var x2 = x + x_offset;
+    var y2 = y + y_offset;
+    var x3 = x - x_offset;
+    var y3 = y + y_offset;
+    var triangle =
+      'M' + x1 + ',' + y1 + 'L' + x2 + ',' + y2 + 'L' + x3 + ',' + y3 + 'Z';
+    return [
+      { latitude: y1, longitude: x1 },
+      { latitude: y2, longitude: x2 },
+      { latitude: y3, longitude: x3 }
+    ];
+  };
+
+  triangleDim = () => {
+    return (this.halfDist() * 2) / Math.sqrt(3);
   };
 
   render() {
@@ -249,6 +291,10 @@ export default class ToDoList extends React.Component {
       addToDoModalState,
       showToDoModalState
     } = this.state;
+    if (selectedMarkers.length === 2) {
+      console.log(this.halfMarker(), this.halfDist());
+    }
+
     return (
       <>
         <ImageBackground
@@ -489,7 +535,7 @@ export default class ToDoList extends React.Component {
             ))}
             {selectedMarkers.length === 2 && (
               <>
-                <Polyline //una din liniile care porneste din primul punch selectat
+                <Polygon //poligonul cu un array cu 3 obiecte; fiecare corespunde unui varf al triunghiului; primul varf ii prima selectie pe harta, celalalte 2 tre modificate
                   coordinates={[
                     {
                       latitude: selectedMarkers[0].latitude,
@@ -497,125 +543,24 @@ export default class ToDoList extends React.Component {
                     },
                     {
                       latitude:
-                        selectedMarkers[0].latitude -
-                        (this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) *
-                          Math.sqrt(3)) /
-                          4,
+                        selectedMarkers[0].latitude + this.triangleDim() / 2,
                       longitude:
                         selectedMarkers[0].longitude +
-                        this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) /
-                          4
-                    }
-                  ]}
-                  strokeColor='#000'
-                  strokeWidth={6}
-                />
-                <Polyline //alta linie care porneste din primul punch selectat
-                  coordinates={[
-                    {
-                      latitude: selectedMarkers[0].latitude,
-                      longitude: selectedMarkers[0].longitude
+                        (this.triangleDim() * Math.sqrt(3)) / 2
                     },
                     {
                       latitude:
-                        selectedMarkers[0].latitude -
-                        (this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) *
-                          Math.sqrt(3)) /
-                          4,
-                      longitude:
-                        selectedMarkers[0].longitude -
-                        this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) /
-                          4
-                    }
-                  ]}
-                  strokeColor='#000'
-                  strokeWidth={6}
-                />
-                <Polyline // linia care uneste extremitatile celor 2 linii care pornesc din acelasi punct
-                  coordinates={[
-                    {
-                      latitude:
-                        selectedMarkers[0].latitude -
-                        (this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) *
-                          Math.sqrt(3)) /
-                          4,
+                        selectedMarkers[0].latitude - this.triangleDim() / 2,
                       longitude:
                         selectedMarkers[0].longitude +
-                        this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) /
-                          4
-                    },
-                    {
-                      latitude:
-                        selectedMarkers[0].latitude -
-                        (this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) *
-                          Math.sqrt(3)) /
-                          4,
-                      longitude:
-                        selectedMarkers[0].longitude -
-                        this.distanceBetweenTwoMarkers(
-                          selectedMarkers[0],
-                          selectedMarkers[1]
-                        ) /
-                          4
+                        (this.triangleDim() * Math.sqrt(3)) / 2
                     }
                   ]}
-                  strokeColor='#000'
-                  strokeWidth={6}
-                />
-                <Polyline // linia care uneste punctele selectate
-                  coordinates={[
-                    {
-                      latitude: selectedMarkers[0].latitude,
-                      longitude: selectedMarkers[0].longitude
-                    },
-                    {
-                      latitude: selectedMarkers[1].latitude,
-                      longitude: selectedMarkers[1].longitude
-                    }
-                  ]}
-                  strokeColor='#000' // fallback for when `strokeColors` is not supported by the map-provider
-                  strokeColors={[
-                    '#7F0000',
-                    '#00000000', // no color, creates a "long" gradient between the previous and next coordinate
-                    '#B24112',
-                    '#E5845C',
-                    '#238C23',
-                    '#7F0000'
-                  ]}
+                  strokeColor='blue'
                   strokeWidth={6}
                 />
                 <Marker // mijlocul distantei dintre cele 2 puncte selectate
-                  coordinate={{
-                    latitude:
-                      (selectedMarkers[0].latitude +
-                        selectedMarkers[1].latitude) /
-                      2,
-                    longitude:
-                      (selectedMarkers[0].longitude +
-                        selectedMarkers[1].longitude) /
-                      2
-                  }}
+                  coordinate={this.halfMarker()}
                 />
               </>
             )}
