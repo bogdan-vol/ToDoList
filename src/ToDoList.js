@@ -9,6 +9,7 @@ import {
   Animated,
   TextInput,
   StatusBar,
+  PixelRatio,
   ScrollView,
   StyleSheet,
   SafeAreaView,
@@ -24,15 +25,14 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 import todoService from './services/todo.service';
 
-const ang90 = (90 * Math.PI) / 180;
-const ang60 = (60 * Math.PI) / 180;
+let selectedMarkers = [];
 export default class ToDoList extends React.Component {
   translateMenuX = new Animated.Value(-1000);
 
   state = {
     todos: [],
     search: '',
-    selectedMarkers: [],
+    translatedCoords: [],
     showDatePicker: false,
     showTimePicker: false,
     map: { visible: false },
@@ -226,58 +226,168 @@ export default class ToDoList extends React.Component {
     );
   };
 
-  selectMarker = toDo => {
-    this.setState(({ selectedMarkers }) => {
-      if (selectedMarkers.length < 2)
-        return { selectedMarkers: [...selectedMarkers, toDo] };
-    });
+  selectMarker = (toDo, position) => {
+    if (selectedMarkers.length < 2)
+      selectedMarkers = [...selectedMarkers, { ...toDo, ...position }];
+    if (selectedMarkers.length === 2) this.polylinePointsFromXY();
   };
 
-  distance = () => {
-    let m1 = this.state.selectedMarkers[0],
-      m2 = this.state.selectedMarkers[1];
+  distanceXY = () => {
+    let m1 = selectedMarkers[0],
+      m2 = selectedMarkers[1];
     return Math.sqrt(
-      Math.pow(Math.abs(m1.latitude - m2.latitude), 2) +
-        Math.pow(Math.abs(m1.longitude - m2.longitude), 2)
+      Math.pow(Math.abs(m1.x - m2.x), 2) + Math.pow(Math.abs(m1.y - m2.y), 2)
     );
   };
 
-  halfDist = () => {
-    return this.distance() / 2;
+  distanceMeters = () => {
+    let sms = selectedMarkers;
+    let lat1 = sms[0].latitude,
+      lon1 = sms[0].longitude,
+      lat2 = sms[1].latitude,
+      lon2 = sms[1].longitude;
+    var R = 6371; // Radius of the earth in km
+    var dLat = this.deg2rad(lat2 - lat1); // deg2rad below
+    var dLon = this.deg2rad(lon2 - lon1);
+    var a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) *
+        Math.cos(this.deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    var d = R * c * 1000; // Distance in meters
+    return d;
+  };
+
+  deg2rad = deg => {
+    return deg * (Math.PI / 180);
+  };
+
+  halfDistXY = () => {
+    return this.distanceXY() / 2;
   };
 
   halfMarker = () => {
-    let { selectedMarkers } = this.state;
     return {
+      x: (selectedMarkers[0].x + selectedMarkers[1].x) / 2,
+      y: (selectedMarkers[0].y + selectedMarkers[1].y) / 2,
       latitude: (selectedMarkers[0].latitude + selectedMarkers[1].latitude) / 2,
       longitude:
         (selectedMarkers[0].longitude + selectedMarkers[1].longitude) / 2
     };
   };
 
-  draw_triangle = () => {
-    let y = this.halfMarker().latitude;
-    let x = this.halfMarker().longitude;
-    let radius = this.halfDist();
-    var x_offset = radius * Math.cos(Math.PI / 6);
-    var y_offset = radius * Math.sin(Math.PI / 6);
-    var x1 = x;
-    var y1 = y - radius;
-    var x2 = x + x_offset;
-    var y2 = y + y_offset;
-    var x3 = x - x_offset;
-    var y3 = y + y_offset;
-    var triangle =
-      'M' + x1 + ',' + y1 + 'L' + x2 + ',' + y2 + 'L' + x3 + ',' + y3 + 'Z';
-    return [
-      { latitude: y1, longitude: x1 },
-      { latitude: y2, longitude: x2 },
-      { latitude: y3, longitude: x3 }
-    ];
+  halfHalfMarker = () => {
+    return {
+      x: (selectedMarkers[0].x + this.halfMarker().x) / 2,
+      y: (selectedMarkers[0].y + this.halfMarker().y) / 2,
+      latitude: (selectedMarkers[0].latitude + this.halfMarker().latitude) / 2,
+      longitude:
+        (selectedMarkers[0].longitude + this.halfMarker().longitude) / 2
+    };
   };
 
-  triangleDim = () => {
-    return (this.halfDist() * 2) / Math.sqrt(3);
+  polylinePointsFromXY = async () => {
+    let sms = selectedMarkers;
+    let { x: midX, y: midY } = this.halfMarker();
+    let halfBase = this.halfDistXY() / Math.sqrt(3);
+    let selAngle = Math.asin((sms[0].y - sms[1].y) / this.distanceXY());
+
+    let orientationX;
+    let orientationY;
+    if (sms[0].x < sms[1].x && sms[0].y > sms[1].y) {
+      orientationX = 1;
+      orientationY = 1;
+    } else if (sms[0].x > sms[1].x && sms[0].y < sms[1].y) {
+      orientationX = 1;
+      orientationY = -1;
+    } else if (sms[0].x < sms[1].x && sms[0].y < sms[1].y) {
+      orientationX = -1;
+      orientationY = -1;
+    } else if (sms[0].x > sms[1].x && sms[0].y > sms[1].y) {
+      orientationX = -1;
+      orientationY = 1;
+    }
+
+    let p0 = {
+      ...(await this.map.coordinateForPoint({
+        x: sms[0].x / PixelRatio.get(),
+        y: sms[0].y / PixelRatio.get()
+      })),
+      x: sms[0].x / PixelRatio.get(),
+      y: sms[0].y / PixelRatio.get()
+    };
+    let p1 = {
+      ...(await this.map.coordinateForPoint({
+        x:
+          (midX + orientationX * Math.cos(Math.PI / 2 - selAngle) * halfBase) /
+          PixelRatio.get(),
+        y:
+          (midY + orientationY * Math.sin(Math.PI / 2 - selAngle) * halfBase) /
+          PixelRatio.get()
+      })),
+      x:
+        (midX + orientationX * Math.cos(Math.PI / 2 - selAngle) * halfBase) /
+        PixelRatio.get(),
+      y:
+        (midY + orientationY * Math.sin(Math.PI / 2 - selAngle) * halfBase) /
+        PixelRatio.get()
+    };
+    let p2 = {
+      ...(await this.map.coordinateForPoint({
+        x:
+          (midX +
+            orientationX * Math.cos((3 * Math.PI) / 2 - selAngle) * halfBase) /
+          PixelRatio.get(),
+        y:
+          (midY +
+            orientationY * Math.sin((3 * Math.PI) / 2 - selAngle) * halfBase) /
+          PixelRatio.get()
+      })),
+      x:
+        (midX +
+          orientationX * Math.cos((3 * Math.PI) / 2 - selAngle) * halfBase) /
+        PixelRatio.get(),
+      y:
+        (midY +
+          orientationY * Math.sin((3 * Math.PI) / 2 - selAngle) * halfBase) /
+        PixelRatio.get()
+    };
+    this.setState(
+      {
+        translatedCoords: [[p0, p1], [p0, p2], [p1, p2]]
+      },
+      async () => {
+        let promises = [];
+        this.state.todos.map(td => promises.push(this.pointInTriangle(td)));
+        let pointsInTr = await Promise.all(promises);
+        console.log(pointsInTr);
+        this.setState(({ todos }) => ({
+          todos: todos.map((td, i) => ({ ...td, hidden: !pointsInTr[i] }))
+        }));
+      }
+    );
+  };
+
+  sign = (p1, p2, p3) => {
+    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+  };
+
+  pointInTriangle = async pt => {
+    let { translatedCoords: trsc } = this.state;
+    if (!trsc.length) return true;
+    let d1, d2, d3;
+    let has_neg, has_pos;
+    let ptxy = await this.map.pointForCoordinate(pt);
+
+    d1 = this.sign(ptxy, trsc[0][0], trsc[0][1]);
+    d2 = this.sign(ptxy, trsc[0][1], trsc[1][1]);
+    d3 = this.sign(ptxy, trsc[1][1], trsc[0][0]);
+
+    has_neg = d1 < 0 || d2 < 0 || d3 < 0;
+    has_pos = d1 > 0 || d2 > 0 || d3 > 0;
+    return !(has_neg && has_pos);
   };
 
   render() {
@@ -287,13 +397,11 @@ export default class ToDoList extends React.Component {
       search,
       showTimePicker,
       showDatePicker,
-      selectedMarkers,
+      translatedCoords,
       addToDoModalState,
       showToDoModalState
     } = this.state;
-    if (selectedMarkers.length === 2) {
-      console.log(this.halfMarker(), this.halfDist());
-    }
+    console.log(todos);
 
     return (
       <>
@@ -376,7 +484,7 @@ export default class ToDoList extends React.Component {
                     >
                       <CheckBox
                         center
-                        checked={td.finished}
+                        checked={!!td.finished}
                         checkedColor='#9747CF'
                         uncheckedColor={'white'}
                         onPress={() => this.toggleFinished(td)}
@@ -497,6 +605,7 @@ export default class ToDoList extends React.Component {
         <Modal transparent={true} visible={map.visible} animationType={'slide'}>
           <MapView
             style={{ flex: 1 }}
+            moveOnMarkerPress={false}
             showsUserLocation={true}
             ref={r => (this.map = r)}
             onPress={this.onMapPress}
@@ -505,6 +614,9 @@ export default class ToDoList extends React.Component {
               PermissionsAndroid.request(
                 PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
               );
+            }}
+            onRegionChangeComplete={() => {
+              selectedMarkers = [];
             }}
             onUserLocationChange={({
               nativeEvent: {
@@ -524,44 +636,63 @@ export default class ToDoList extends React.Component {
           >
             {todos.map(td => (
               <Marker
+                key={td.rowid}
                 title={td.name}
                 description={td.date}
-                onPress={() => this.selectMarker(td)}
+                opacity={
+                  td.hidden && td.rowid !== selectedMarkers[1].rowid ? 0 : 1
+                }
+                onPress={({ nativeEvent: { position } }) =>
+                  this.selectMarker(td, position)
+                }
                 coordinate={{
                   latitude: td.latitude,
                   longitude: td.longitude
                 }}
               />
             ))}
-            {selectedMarkers.length === 2 && (
+            {!!translatedCoords.length && (
               <>
-                <Polygon //poligonul cu un array cu 3 obiecte; fiecare corespunde unui varf al triunghiului; primul varf ii prima selectie pe harta, celalalte 2 tre modificate
+                <Circle
+                  center={this.halfHalfMarker()}
+                  radius={this.distanceMeters() / 4}
+                />
+                <Polyline
+                  strokeWidth={6}
+                  geodesic={false}
+                  strokeColor='blue'
+                  coordinates={translatedCoords[0]}
+                />
+                <Polyline
+                  strokeWidth={6}
+                  geodesic={false}
+                  strokeColor='red'
+                  coordinates={translatedCoords[1]}
+                />
+                <Polyline
+                  strokeWidth={6}
+                  geodesic={false}
+                  strokeColor='green'
+                  coordinates={translatedCoords[2]}
+                />
+                <Polyline
+                  geodesic={false}
                   coordinates={[
                     {
                       latitude: selectedMarkers[0].latitude,
                       longitude: selectedMarkers[0].longitude
                     },
                     {
-                      latitude:
-                        selectedMarkers[0].latitude + this.triangleDim() / 2,
-                      longitude:
-                        selectedMarkers[0].longitude +
-                        (this.triangleDim() * Math.sqrt(3)) / 2
-                    },
-                    {
-                      latitude:
-                        selectedMarkers[0].latitude - this.triangleDim() / 2,
-                      longitude:
-                        selectedMarkers[0].longitude +
-                        (this.triangleDim() * Math.sqrt(3)) / 2
+                      latitude: selectedMarkers[1].latitude,
+                      longitude: selectedMarkers[1].longitude
                     }
                   ]}
-                  strokeColor='blue'
+                  strokeColor='#000'
                   strokeWidth={6}
                 />
-                <Marker // mijlocul distantei dintre cele 2 puncte selectate
-                  coordinate={this.halfMarker()}
-                />
+                <Marker pinColor={'blue'} coordinate={this.halfMarker()} />
+                <Marker pinColor={'blue'} coordinate={translatedCoords[0][1]} />
+                <Marker pinColor={'blue'} coordinate={translatedCoords[1][1]} />
               </>
             )}
           </MapView>
@@ -576,12 +707,35 @@ export default class ToDoList extends React.Component {
             }}
             onPress={() =>
               this.setState(
-                { map: { visible: false } },
+                ({ todos }) => ({
+                  translatedCoords: [],
+                  map: { visible: false },
+                  todos: todos.map(td => ({ ...td, hidden: false }))
+                }),
                 () => delete this.mapCentered
               )
             }
           >
             <Icon name='times' size={30} color='black' />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              top: 0,
+              left: 0,
+              padding: 10,
+              borderWidth: 2,
+              position: 'absolute',
+              backgroundColor: 'white'
+            }}
+            onPress={() => {
+              selectedMarkers = [];
+              this.setState(({ todos }) => ({
+                translatedCoords: [],
+                todos: todos.map(td => ({ ...td, hidden: false }))
+              }));
+            }}
+          >
+            <Text>Clear paths</Text>
           </TouchableOpacity>
         </Modal>
         <Modal
