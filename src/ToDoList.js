@@ -242,10 +242,10 @@ export default class ToDoList extends React.Component {
 
   distanceMeters = () => {
     let sms = selectedMarkers;
-    let lat1 = sms[0].latitude,
-      lon1 = sms[0].longitude,
-      lat2 = sms[1].latitude,
-      lon2 = sms[1].longitude;
+    let lat1 = sms[0].latitude, //first point on the map
+      lon1 = sms[0].longitude, //first point on the map
+      lat2 = sms[1].latitude, //second point on the map
+      lon2 = sms[1].longitude; //second point on the map
     var R = 6371; // Radius of the earth in km
     var dLat = this.deg2rad(lat2 - lat1); // deg2rad below
     var dLon = this.deg2rad(lon2 - lon1);
