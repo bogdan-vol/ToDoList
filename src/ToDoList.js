@@ -19,17 +19,21 @@ import {
 } from 'react-native';
 
 import { CheckBox } from 'react-native-elements';
-import MapView, { Marker, Polyline, Polygon, Circle } from 'react-native-maps';
+import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import todoService from './services/todo.service';
 
+let distances = [];
 let selectedMarkers = [];
+let speedCheckPoints = [];
+const speedCheckInterval = 10000;
 export default class ToDoList extends React.Component {
   translateMenuX = new Animated.Value(-1000);
 
   state = {
+    speed: 0,
     todos: [],
     search: '',
     translatedCoords: [],
@@ -41,9 +45,10 @@ export default class ToDoList extends React.Component {
   };
 
   componentDidMount() {
-    todoService.getTodos().then(todos => {
-      console.log(todos);
-      this.setState({ todos });
+    let promises = [];
+    promises.push(todoService.getTodos(), todoService.getSpeed());
+    Promise.all(promises).then(result => {
+      this.setState({ todos: result[0], speed: result[1].speed || 0 });
     });
   }
 
@@ -240,8 +245,8 @@ export default class ToDoList extends React.Component {
     );
   };
 
-  distanceMeters = () => {
-    let sms = selectedMarkers;
+  distanceMeters = sms => {
+    if (!sms) sms = selectedMarkers;
     let lat1 = sms[0].latitude, //first point on the map
       lon1 = sms[0].longitude, //first point on the map
       lat2 = sms[1].latitude, //second point on the map
@@ -390,9 +395,32 @@ export default class ToDoList extends React.Component {
     return !(has_neg && has_pos);
   };
 
+  calculateSpeed = ({ latitude, longitude }) => {
+    speedCheckPoints.push({ latitude, longitude });
+    if (speedCheckPoints.length > 1) {
+      let pointsNo = speedCheckPoints.length;
+      let time = speedCheckInterval * (pointsNo - 1);
+      let distance = this.distanceMeters([
+        speedCheckPoints[pointsNo - 2],
+        speedCheckPoints[pointsNo - 1]
+      ]);
+      distances.push(distance);
+      let totalDistance = distances.reduce((a, b) => a + b);
+      this.setState({
+        speed: totalDistance / (time / 1000)
+      });
+      todoService.updateSpeed({
+        latitude,
+        longitude,
+        speed: totalDistance / (time / 1000)
+      });
+    }
+  };
+
   render() {
     let {
       map,
+      speed,
       todos,
       search,
       showTimePicker,
@@ -605,18 +633,17 @@ export default class ToDoList extends React.Component {
         <Modal transparent={true} visible={map.visible} animationType={'slide'}>
           <MapView
             style={{ flex: 1 }}
-            moveOnMarkerPress={false}
             showsUserLocation={true}
             ref={r => (this.map = r)}
             onPress={this.onMapPress}
+            moveOnMarkerPress={false}
             onPoiClick={this.onMapPress}
+            userLocationUpdateInterval={speedCheckInterval}
+            onRegionChangeComplete={() => (selectedMarkers = [])}
             onMapReady={() => {
               PermissionsAndroid.request(
                 PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
               );
-            }}
-            onRegionChangeComplete={() => {
-              selectedMarkers = [];
             }}
             onUserLocationChange={({
               nativeEvent: {
@@ -632,6 +659,7 @@ export default class ToDoList extends React.Component {
                   longitudeDelta: 0.0421
                 });
               }
+              this.calculateSpeed({ latitude, longitude });
             }}
           >
             {todos.map(td => (
@@ -696,6 +724,19 @@ export default class ToDoList extends React.Component {
               </>
             )}
           </MapView>
+          <Text
+            style={{
+              left: 0,
+              bottom: 0,
+              padding: 10,
+              fontSize: 15,
+              borderWidth: 2,
+              position: 'absolute',
+              backgroundColor: 'white'
+            }}
+          >
+            {speed.toFixed(2)} m/s
+          </Text>
           <TouchableOpacity
             style={{
               top: 0,

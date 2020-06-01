@@ -112,4 +112,49 @@ router.delete('/todos/:id', async (req, res) => {
   );
 });
 
+router.put('/speed', async (req, res) => {
+  if (!req.headers) return res.send({ authenticated: false });
+  let { authenticated, userId } = await authentication(req.headers);
+  if (!authenticated) return res.send({ authenticated: false });
+  let { speed, latitude, longitude } = req.body;
+  db.all('SELECT ROWID from speed WHERE id_user = ?;', [userId], (e, r) => {
+    if (e) return res.send({ err: e.toString() });
+    console.log(r);
+
+    if (r.length) {
+      db.all(
+        'UPDATE speed SET speed = ?, lat_t = ?, long_t = ? WHERE id_user = ?;',
+        [speed, latitude, longitude, userId],
+        (e, r) => {
+          console.log(r, speed, latitude, longitude, userId);
+
+          if (e) return res.send({ err: e.toString() });
+          res.send(r);
+        }
+      );
+    } else {
+      db.all(
+        'INSERT INTO speed VALUES (?, ?, ?, ?);',
+        [speed, latitude, longitude, userId],
+        (e, r) => {
+          if (e) return res.send({ err: e.toString() });
+          res.send(r);
+        }
+      );
+    }
+  });
+});
+
+router.get('/speed', async (req, res) => {
+  console.log(req.headers);
+  if (!req.headers) return res.send({ authenticated: false });
+  let { authenticated, userId } = await authentication(req.headers);
+
+  if (!authenticated) return res.send({ authenticated: false });
+  db.all('SELECT ROWID, * FROM speed WHERE id_user = ?;', [userId], (e, r) => {
+    if (e) return res.send({ err: e.toString() });
+    res.send(r);
+  });
+});
+
 module.exports = router;

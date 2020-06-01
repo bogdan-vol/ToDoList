@@ -9,9 +9,15 @@ const postTodo = body => request('todo/todos', 'POST', JSON.stringify(body));
 const updateTodo = (id, body) =>
   request(`todo/todos/${id}`, 'PUT', JSON.stringify(body));
 
+const getSpeed = () => request('todo/speed');
+
+const updateSpeed = body => request(`todo/speed`, 'PUT', JSON.stringify(body));
+
 export default {
   getTodos,
   postTodo,
+  getSpeed,
   updateTodo,
-  deleteTodo
+  deleteTodo,
+  updateSpeed
 };
