@@ -11,7 +11,7 @@ const updateTodo = (id, body) =>
 
 const getSpeed = () => request('todo/speed');
 
-const updateSpeed = body => request(`todo/speed`, 'PUT', JSON.stringify(body));
+const postSpeed = body => request(`todo/speed`, 'POST', JSON.stringify(body));
 
 export default {
   getTodos,
@@ -19,5 +19,5 @@ export default {
   getSpeed,
   updateTodo,
   deleteTodo,
-  updateSpeed
+  postSpeed
 };
