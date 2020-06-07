@@ -29,6 +29,7 @@ let distances = [];
 let selectedMarkers = [];
 let speedCheckPoints = [];
 const speedCheckInterval = 120000;
+var datetime = new Date();
 export default class ToDoList extends React.Component {
   translateMenuX = new Animated.Value(-1000);
 
@@ -412,6 +413,7 @@ export default class ToDoList extends React.Component {
       todoService.postSpeed({
         latitude,
         longitude,
+        datetime,
         speed: totalDistance / (time / 1000)
       });
     }
