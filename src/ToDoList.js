@@ -29,7 +29,6 @@ let distances = [];
 let selectedMarkers = [];
 let speedCheckPoints = [];
 const speedCheckInterval = 120000;
-var datetime = new Date();
 export default class ToDoList extends React.Component {
   translateMenuX = new Animated.Value(-1000);
 
@@ -49,6 +48,13 @@ export default class ToDoList extends React.Component {
     let promises = [];
     promises.push(todoService.getTodos(), todoService.getSpeed());
     Promise.all(promises).then(result => {
+      console.log(result[1]);
+
+      speedCheckPoints = result[1].map(r => ({
+        ...r,
+        latitude: r.lat_t,
+        longitude: r.long_t
+      }));
       this.setState({ todos: result[0], speed: result[1].speed || 0 });
     });
   }
@@ -136,7 +142,7 @@ export default class ToDoList extends React.Component {
 
   formatDate = date => {
     const d = new Date(date);
-    return `${d.getDate()}/${d.getMonth()}/${d.getFullYear()}`;
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
   };
 
   formatTime = time => {
@@ -365,12 +371,48 @@ export default class ToDoList extends React.Component {
         translatedCoords: [[p0, p1], [p0, p2], [p1, p2]]
       },
       async () => {
-        let promises = [];
-        this.state.todos.map(td => promises.push(this.pointInTriangle(td)));
-        let pointsInTr = await Promise.all(promises);
-        console.log(pointsInTr);
+        let toDoPromises = [];
+        let speedCheckPointsPromises = [];
+        this.state.todos.map(td => toDoPromises.push(this.pointInTriangle(td)));
+        speedCheckPoints.map(scp =>
+          speedCheckPointsPromises.push(this.pointInTriangle(scp))
+        );
+        let pointsInTrBools = await Promise.all(toDoPromises);
+        let speedCheckPointsInTrBools = await Promise.all(
+          speedCheckPointsPromises
+        );
+        let speedCheckPointsInTr = speedCheckPoints.filter(
+          (scp, i) => speedCheckPointsInTrBools[i]
+        );
+
+        //FILTER BY HOR +/- 1
+        let dateArr = selectedMarkers[0].date.split('/');
+        let date = `${dateArr[1]}/${dateArr[0]}/${dateArr[2]}`;
+        let timeArr = selectedMarkers[0].time.split(':');
+        let firstSelectedmarkerDate1HAfter = new Date(
+          `${date} ${selectedMarkers[0].time}`
+        ).setHours(parseInt(timeArr[0]) + 1);
+        let firstSelectedmarkerDate1HBefore = new Date(
+          `${date} ${selectedMarkers[0].time}`
+        ).setHours(timeArr[0] - 1);
+
+        let speedCheckPointsInTrBeforeAfterOneHour = speedCheckPointsInTr.filter(
+          scpt =>
+            new Date(scpt.datetime_t) <
+              new Date(firstSelectedmarkerDate1HAfter) &&
+            new Date(scpt.datetime_t) >
+              new Date(firstSelectedmarkerDate1HBefore)
+        );
+        ////////////////////////////////////
+
         this.setState(({ todos }) => ({
-          todos: todos.map((td, i) => ({ ...td, hidden: !pointsInTr[i] }))
+          todos: todos.map((td, i) => ({ ...td, hidden: !pointsInTrBools[i] })),
+          speed: speedCheckPointsInTrBeforeAfterOneHour.length
+            ? speedCheckPointsInTrBeforeAfterOneHour.reduce(
+                (a, b) => a + b.speed,
+                0
+              ) / speedCheckPointsInTrBeforeAfterOneHour.length
+            : 0
         }));
       }
     );
@@ -405,15 +447,24 @@ export default class ToDoList extends React.Component {
         speedCheckPoints[pointsNo - 2],
         speedCheckPoints[pointsNo - 1]
       ]);
+      speedCheckPoints[speedCheckPoints.length - 1].speed =
+        distance / (speedCheckInterval / 1000);
+      speedCheckPoints[
+        speedCheckPoints.length - 1
+      ].datetime_t = new Date().toString();
       distances.push(distance);
       let totalDistance = distances.reduce((a, b) => a + b);
-      this.setState({
-        speed: totalDistance / (time / 1000)
-      });
+      if (selectedMarkers.length === 2) {
+        this.polylinePointsFromXY();
+      } else {
+        this.setState({
+          speed: totalDistance / (time / 1000)
+        });
+      }
       todoService.postSpeed({
         latitude,
         longitude,
-        datetime,
+        datetime: new Date().toString(),
         speed: totalDistance / (time / 1000)
       });
     }
