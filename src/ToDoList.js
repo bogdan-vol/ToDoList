@@ -465,7 +465,7 @@ export default class ToDoList extends React.Component {
         latitude,
         longitude,
         datetime: new Date().toString(),
-        speed: totalDistance / (time / 1000)
+        speed: distance / (time / 1000)
       });
     }
   };
