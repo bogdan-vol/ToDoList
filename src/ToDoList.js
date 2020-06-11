@@ -22,6 +22,7 @@ import { CheckBox } from 'react-native-elements';
 import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import MapViewDirections from 'react-native-maps-directions';
 
 import todoService from './services/todo.service';
 
@@ -272,6 +273,20 @@ export default class ToDoList extends React.Component {
     return d;
   };
 
+  // radiusCircle = () => {
+
+  // };
+
+  // pointsCircle = () => {
+  //   // StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+  //   let googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+  //   googlePlacesUrl.append("location=" + latLng.latitude + "," + latLng.longitude);
+  //   googlePlacesUrl.append("&radius=" + 3);
+  //   googlePlacesUrl.append("&types=" + restaurant);
+  //   googlePlacesUrl.append("&sensor=true");
+  //   googlePlacesUrl.append("&key=" + "server key from google console");
+  // }
+
   deg2rad = deg => {
     return deg * (Math.PI / 180);
   };
@@ -287,6 +302,13 @@ export default class ToDoList extends React.Component {
       latitude: (selectedMarkers[0].latitude + selectedMarkers[1].latitude) / 2,
       longitude:
         (selectedMarkers[0].longitude + selectedMarkers[1].longitude) / 2
+    };
+  };
+
+  centerCircle = () => {
+    return {
+      latitude: selectedMarkers[0].latitude,
+      longitude: selectedMarkers[0].longitude
     };
   };
 
@@ -442,7 +464,7 @@ export default class ToDoList extends React.Component {
     speedCheckPoints.push({ latitude, longitude });
     if (speedCheckPoints.length > 1) {
       let pointsNo = speedCheckPoints.length;
-      let time = speedCheckInterval * (pointsNo - 1);
+      // let time = speedCheckInterval * (pointsNo - 1);
       let distance = this.distanceMeters([
         speedCheckPoints[pointsNo - 2],
         speedCheckPoints[pointsNo - 1]
@@ -453,19 +475,19 @@ export default class ToDoList extends React.Component {
         speedCheckPoints.length - 1
       ].datetime_t = new Date().toString();
       distances.push(distance);
-      let totalDistance = distances.reduce((a, b) => a + b);
+      // let totalDistance = distances.reduce((a, b) => a + b);
       if (selectedMarkers.length === 2) {
         this.polylinePointsFromXY();
       } else {
         this.setState({
-          speed: totalDistance / (time / 1000)
+          speed: distance / (speedCheckInterval / 1000)
         });
       }
       todoService.postSpeed({
         latitude,
         longitude,
         datetime: new Date().toString(),
-        speed: distance / (time / 1000)
+        speed: distance / (speedCheckInterval / 1000)
       });
     }
   };
@@ -735,9 +757,16 @@ export default class ToDoList extends React.Component {
             {!!translatedCoords.length && (
               <>
                 <Circle
-                  center={this.halfHalfMarker()}
+                  center={this.centerCircle()}
                   radius={this.distanceMeters() / 4}
                 />
+                {/* <MapViewDirections>
+                  origin={selectedMarkers[0].latitude, selectedMarkers[0].longitude}
+                  destination={selectedMarkers[1].latitude, selectedMarkers[1].longitude}
+                  apikey={GOOGLE_MAPS_APIKEY}
+                  strokeWidth={2}
+                  strokeColor="pink"
+                </MapViewDirections> */}
                 <Polyline
                   strokeWidth={6}
                   geodesic={false}
