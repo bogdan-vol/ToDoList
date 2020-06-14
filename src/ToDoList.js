@@ -29,7 +29,8 @@ import todoService from './services/todo.service';
 let distances = [];
 let selectedMarkers = [];
 let speedCheckPoints = [];
-const speedCheckInterval = 5000;
+const speedCheckInterval = 120000;
+
 export default class ToDoList extends React.Component {
   translateMenuX = new Animated.Value(-1000);
 
@@ -259,7 +260,6 @@ export default class ToDoList extends React.Component {
       lon1 = sms[0].longitude, //first point on the map
       lat2 = sms[1].latitude, //second point on the map
       lon2 = sms[1].longitude; //second point on the map
-
     var R = 6371; // Radius of the earth in km
     var dLat = this.deg2rad(lat2 - lat1); // deg2rad below
     var dLon = this.deg2rad(lon2 - lon1);
@@ -271,9 +271,22 @@ export default class ToDoList extends React.Component {
         Math.sin(dLon / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c * 1000; // Distance in meters
-
     return d;
   };
+
+  // radiusCircle = () => {
+
+  // };
+
+  // pointsCircle = () => {
+  //   // StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+  //   let googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+  //   googlePlacesUrl.append("location=" + latLng.latitude + "," + latLng.longitude);
+  //   googlePlacesUrl.append("&radius=" + 3);
+  //   googlePlacesUrl.append("&types=" + restaurant);
+  //   googlePlacesUrl.append("&sensor=true");
+  //   googlePlacesUrl.append("&key=" + "server key from google console");
+  // }
 
   deg2rad = deg => {
     return deg * (Math.PI / 180);
