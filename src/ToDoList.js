@@ -31,6 +31,7 @@ let selectedMarkers = [];
 let speedCheckPoints = [];
 const speedCheckInterval = 120000;
 
+
 export default class ToDoList extends React.Component {
   translateMenuX = new Animated.Value(-1000);
 
@@ -274,19 +275,19 @@ export default class ToDoList extends React.Component {
     return d;
   };
 
-  // radiusCircle = () => {
+  radiusCircle = () => {
 
-  // };
+  };
 
-  // pointsCircle = () => {
-  //   // StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
-  //   let googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
-  //   googlePlacesUrl.append("location=" + latLng.latitude + "," + latLng.longitude);
-  //   googlePlacesUrl.append("&radius=" + 3);
-  //   googlePlacesUrl.append("&types=" + restaurant);
-  //   googlePlacesUrl.append("&sensor=true");
-  //   googlePlacesUrl.append("&key=" + "server key from google console");
-  // }
+  pointsCircle = () => {
+    // StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+    let googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+    googlePlacesUrl.append("location=" + latLng.latitude + "," + latLng.longitude);
+    googlePlacesUrl.append("&radius=" + 3);
+    googlePlacesUrl.append("&types=" + restaurant);
+    googlePlacesUrl.append("&sensor=true");
+    googlePlacesUrl.append("&key=" + "server key from google console");
+  }
 
   deg2rad = deg => {
     return deg * (Math.PI / 180);
@@ -777,9 +778,9 @@ export default class ToDoList extends React.Component {
                     latitude: selectedMarkers[1].latitude,
                     longitude: selectedMarkers[1].longitude
                   }}
-                  apikey={'AIzaSyBsXeyRmXs376cCIvjViRKk3eKXflM_Kb4'}
+                  apikey={'AIzaSyBVLwNIzdYWUWqMruuNmMVvjBrH1z4Rd1E'}
                   strokeWidth={2}
-                  strokeColor='pink'
+                  strokeColor='hotpink'
                 />
                 <Polyline
                   strokeWidth={6}
